@@ -1,0 +1,347 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── AUTH & PROFILE ───────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  dateOfBirth  DateTime
+  bio          String?
+  city         String?
+  role         UserRole @default(SEEKER)
+
+  // Stripe Connect
+  stripeCustomerId   String?  @unique
+  stripeAccountId    String?  @unique
+  stripeAccountReady Boolean  @default(false)
+
+  refreshToken String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  photos        UserPhoto[]
+  habits        Habits?
+  listings      Listing[]        @relation("OwnerListings")
+  sentInterests Interest[]       @relation("SentInterests")
+  conversations ConversationMember[]
+  messages      Message[]
+  favorites     Favorite[]
+  notifications Notification[]
+
+  paymentsSent     Payment[] @relation("PaymentTenant")
+  paymentsReceived Payment[] @relation("PaymentLandlord")
+  tenancies        Tenancy[] @relation("Tenant")
+  ownedTenancies   Tenancy[] @relation("Landlord")
+
+  @@index([city])
+  @@map("users")
+}
+
+enum UserRole {
+  SEEKER
+  LANDLORD
+  BOTH
+}
+
+model UserPhoto {
+  id       String @id @default(uuid())
+  url      String
+  position Int
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_photos")
+}
+
+model Habits {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedule    Schedule
+  smoker      Boolean
+  pets        Boolean
+  cleanliness Int      // 1-5
+  noise       Int      // 1-5
+  visitors    Int      // 1-5
+  budgetMin   Int      // cents
+  budgetMax   Int      // cents
+
+  @@map("habits")
+}
+
+enum Schedule {
+  DAY
+  NIGHT
+}
+
+// ─── LISTINGS ─────────────────────────────────────────────
+
+model Listing {
+  id            String        @id @default(uuid())
+  ownerId       String
+  owner         User          @relation("OwnerListings", fields: [ownerId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  type          ListingType
+  pricePerMonth Int           // cents
+
+  // Location
+  latitude  Float
+  longitude Float
+  address   String
+  city      String
+
+  // Details
+  bedrooms      Int
+  bathrooms     Int
+  furnished     Boolean       @default(false)
+  billsIncluded Boolean       @default(false)
+  availableFrom DateTime
+
+  // House rules
+  smokersAllowed  Boolean @default(false)
+  petsAllowed     Boolean @default(false)
+  preferredGender Gender?
+
+  status    ListingStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  photos    ListingPhoto[]
+  interests Interest[]
+  favorites Favorite[]
+  tenancies Tenancy[]
+
+  @@index([ownerId])
+  @@index([city])
+  @@index([status])
+  @@index([type])
+  @@index([pricePerMonth])
+  @@index([latitude, longitude])
+  @@map("listings")
+}
+
+enum ListingType {
+  ROOM
+  APARTMENT
+  COLIVING
+}
+
+enum ListingStatus {
+  ACTIVE
+  RENTED
+  EXPIRED
+  PAUSED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  ANY
+}
+
+model ListingPhoto {
+  id        String  @id @default(uuid())
+  url       String
+  position  Int
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@map("listing_photos")
+}
+
+// ─── INTEREST / LIKE SYSTEM ───────────────────────────────
+
+model Interest {
+  id        String         @id @default(uuid())
+  userId    String
+  user      User           @relation("SentInterests", fields: [userId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing        @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  message   String?
+  status    InterestStatus @default(PENDING)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  conversation Conversation?
+
+  @@unique([userId, listingId])
+  @@index([listingId, status])
+  @@index([userId])
+  @@map("interests")
+}
+
+enum InterestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+// ─── CHAT ─────────────────────────────────────────────────
+
+model Conversation {
+  id         String   @id @default(uuid())
+  interestId String   @unique
+  interest   Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  members  ConversationMember[]
+  messages Message[]
+
+  @@map("conversations")
+}
+
+model ConversationMember {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_members")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@map("messages")
+}
+
+// ─── FAVORITES ────────────────────────────────────────────
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+  @@index([userId])
+  @@map("favorites")
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String?
+  data      Json?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  NEW_INTEREST
+  INTEREST_ACCEPTED
+  NEW_MESSAGE
+  NEW_MATCHING_LISTING
+  RENT_DUE
+  RENT_OVERDUE
+  PAYMENT_RECEIVED
+  PAYMENT_CONFIRMED
+}
+
+// ─── PAYMENTS ─────────────────────────────────────────────
+
+model Tenancy {
+  id         String       @id @default(uuid())
+  listingId  String
+  listing    Listing      @relation(fields: [listingId], references: [id])
+  tenantId   String
+  tenant     User         @relation("Tenant", fields: [tenantId], references: [id])
+  landlordId String
+  landlord   User         @relation("Landlord", fields: [landlordId], references: [id])
+  rentAmount Int          // cents
+  startDate  DateTime
+  endDate    DateTime?
+  status     TenancyStatus @default(ACTIVE)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  payments Payment[]
+
+  @@unique([listingId, tenantId])
+  @@index([tenantId])
+  @@index([landlordId])
+  @@map("tenancies")
+}
+
+enum TenancyStatus {
+  ACTIVE
+  ENDED
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  tenancyId        String
+  tenancy          Tenancy       @relation(fields: [tenancyId], references: [id])
+  tenantId         String
+  tenant           User          @relation("PaymentTenant", fields: [tenantId], references: [id])
+  landlordId       String
+  landlord         User          @relation("PaymentLandlord", fields: [landlordId], references: [id])
+  amount           Int           // cents
+  commissionAmount Int           // 2% fee in cents
+  netAmount        Int           // amount - commission
+  currency         String        @default("eur")
+
+  stripePaymentIntentId String? @unique
+  stripeTransferId      String? @unique
+
+  status      PaymentStatus @default(PENDING)
+  periodStart DateTime
+  periodEnd   DateTime
+  dueDate     DateTime
+  paidAt      DateTime?
+  receiptUrl  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenancyId])
+  @@index([tenantId, status])
+  @@index([landlordId, status])
+  @@index([dueDate, status])
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  OVERDUE
+  REFUNDED
+}
