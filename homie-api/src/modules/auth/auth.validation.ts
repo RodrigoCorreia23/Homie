@@ -18,6 +18,7 @@ export const signupSchema = z.object({
       return age >= 18;
     }, 'You must be at least 18 years old'),
   city: z.string().optional(),
+  role: z.enum(['SEEKER', 'LANDLORD', 'BOTH']).optional(),
 });
 
 export const loginSchema = z.object({

@@ -42,7 +42,7 @@ export async function getPublicProfile(userId: string) {
 
 export async function updateProfile(
   userId: string,
-  data: { name?: string; bio?: string; city?: string; role?: 'SEEKER' | 'LANDLORD' | 'BOTH' },
+  data: { name?: string; bio?: string; city?: string; preferredCity?: string; role?: 'SEEKER' | 'LANDLORD' | 'BOTH' },
 ) {
   const user = await prisma.user.update({
     where: { id: userId },
@@ -76,6 +76,45 @@ export async function updateHabits(
   });
 
   return habits;
+}
+
+export async function completeOnboarding(
+  userId: string,
+  data: {
+    role: 'SEEKER' | 'LANDLORD' | 'BOTH';
+    preferredCity?: string;
+    habits?: {
+      schedule: 'DAY' | 'NIGHT';
+      smoker: boolean;
+      pets: boolean;
+      cleanliness: number;
+      noise: number;
+      visitors: number;
+      budgetMin: number;
+      budgetMax: number;
+    };
+  },
+) {
+  // Update user role and preferredCity
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      role: data.role,
+      ...(data.preferredCity !== undefined && { preferredCity: data.preferredCity }),
+    },
+  });
+
+  // Upsert habits if provided
+  if (data.habits) {
+    await prisma.habits.upsert({
+      where: { userId },
+      update: data.habits,
+      create: { userId, ...data.habits },
+    });
+  }
+
+  // Return updated profile
+  return getProfile(userId);
 }
 
 export async function addPhoto(userId: string, url: string, position: number) {
@@ -112,4 +151,12 @@ export async function deletePhoto(userId: string, photoId: string) {
   });
 
   return { message: 'Photo deleted' };
+}
+
+export async function updatePushToken(userId: string, token: string) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { expoPushToken: token },
+  });
+  return { message: 'Push token updated' };
 }

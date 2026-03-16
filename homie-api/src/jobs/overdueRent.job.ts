@@ -1,5 +1,6 @@
 import { prisma } from '../config/database';
 import { createNotification } from '../modules/notification/notification.service';
+import { sendPushNotification } from '../shared/utils/pushNotifications';
 
 export async function checkOverduePayments(): Promise<void> {
   try {
@@ -20,6 +21,14 @@ export async function checkOverduePayments(): Promise<void> {
       await createNotification(
         payment.tenantId,
         'RENT_OVERDUE',
+        'Rent overdue',
+        `Your rent for ${payment.tenancy.listing.title} is overdue.`,
+        { paymentId: payment.id, tenancyId: payment.tenancyId }
+      );
+
+      // Send push notification to tenant
+      await sendPushNotification(
+        payment.tenantId,
         'Rent overdue',
         `Your rent for ${payment.tenancy.listing.title} is overdue.`,
         { paymentId: payment.id, tenancyId: payment.tenancyId }

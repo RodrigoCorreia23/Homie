@@ -59,12 +59,24 @@ export async function getListingFeed(userId: string, filters: ListingFeedFilters
   const { page, limit, sortBy } = filters;
   const skip = (page - 1) * limit;
 
+  // If no city filter provided, use the user's preferredCity as default
+  let cityFilter = filters.city;
+  if (!cityFilter) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { preferredCity: true },
+    });
+    if (user?.preferredCity) {
+      cityFilter = user.preferredCity;
+    }
+  }
+
   // Build where clause
   const where: any = {
     status: 'ACTIVE',
   };
 
-  if (filters.city) where.city = filters.city;
+  if (cityFilter) where.city = cityFilter;
   if (filters.type) where.type = filters.type;
   if (filters.furnished !== undefined) where.furnished = filters.furnished;
   if (filters.billsIncluded !== undefined) where.billsIncluded = filters.billsIncluded;

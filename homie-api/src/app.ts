@@ -11,6 +11,7 @@ import chatRoutes from './modules/chat/chat.routes';
 import favoriteRoutes from './modules/favorite/favorite.routes';
 import notificationRoutes from './modules/notification/notification.routes';
 import { paymentRoutes, stripeWebhookRoute } from './modules/payment/payment.routes';
+import uploadRoutes from './modules/upload/upload.routes';
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error handler
 app.use(errorHandler);

@@ -26,6 +26,7 @@ export async function signup(data: {
   name: string;
   dateOfBirth: string;
   city?: string;
+  role?: 'SEEKER' | 'LANDLORD' | 'BOTH';
 }) {
   const existing = await prisma.user.findUnique({ where: { email: data.email } });
   if (existing) {
@@ -41,6 +42,7 @@ export async function signup(data: {
       name: data.name,
       dateOfBirth: new Date(data.dateOfBirth),
       city: data.city,
+      ...(data.role && { role: data.role }),
     },
     select: {
       id: true,

@@ -1,6 +1,7 @@
 import { prisma } from '../../config/database';
 import { AppError } from '../../shared/middleware/errorHandler';
 import { getIO } from '../../socket';
+import { sendPushNotification } from '../../shared/utils/pushNotifications';
 
 export async function sendInterest(userId: string, listingId: string, message?: string) {
   const listing = await prisma.listing.findUnique({
@@ -58,6 +59,14 @@ export async function sendInterest(userId: string, listingId: string, message?: 
       data: { interestId: interest.id, listingId: listing.id },
     },
   });
+
+  // Send push notification to listing owner
+  await sendPushNotification(
+    listing.ownerId,
+    'New interest on your listing',
+    `${interest.user.name} is interested in "${listing.title}"`,
+    { interestId: interest.id, listingId: listing.id }
+  );
 
   return interest;
 }
@@ -179,6 +188,14 @@ export async function acceptInterest(interestId: string, userId: string) {
       data: { interestId, conversationId: conversation.id, listingId: interest.listing.id },
     },
   });
+
+  // Send push notification to the requester
+  await sendPushNotification(
+    interest.userId,
+    'Your interest was accepted!',
+    `Your interest in "${interest.listing.title}" has been accepted. Start chatting now!`,
+    { interestId, conversationId: conversation.id, listingId: interest.listing.id }
+  );
 
   return { interest: updatedInterest, conversation };
 }

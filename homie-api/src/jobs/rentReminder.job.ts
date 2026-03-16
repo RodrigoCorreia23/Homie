@@ -1,5 +1,6 @@
 import { prisma } from '../config/database';
 import { createNotification } from '../modules/notification/notification.service';
+import { sendPushNotification } from '../shared/utils/pushNotifications';
 
 export async function sendRentReminders(): Promise<void> {
   try {
@@ -66,6 +67,14 @@ export async function sendRentReminders(): Promise<void> {
         await createNotification(
           tenancy.tenantId,
           'RENT_DUE',
+          'Rent due soon',
+          `Your rent for ${tenancy.listing.title} is due in 3 days.`,
+          { paymentId: pendingPayment.id, tenancyId: tenancy.id }
+        );
+
+        // Send push notification to tenant
+        await sendPushNotification(
+          tenancy.tenantId,
           'Rent due soon',
           `Your rent for ${tenancy.listing.title} is due in 3 days.`,
           { paymentId: pendingPayment.id, tenancyId: tenancy.id }

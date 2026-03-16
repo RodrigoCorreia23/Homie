@@ -9,41 +9,57 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { userService } from '../../services/user.service';
 import { COLORS } from '../../utils/constants';
 import type { Habits } from '../../types';
 
 type Schedule = 'DAY' | 'NIGHT';
+type Role = 'SEEKER' | 'LANDLORD' | 'BOTH';
 
 export default function OnboardingScreen() {
   const [step, setStep] = useState(1);
-  const totalSteps = 4;
+  const totalSteps = 5;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Step 1: Schedule
+  // Step 1: Role Selection
+  const [role, setRole] = useState<Role | null>(null);
+  const [preferredCity, setPreferredCity] = useState('');
+
+  // Step 2: Schedule
   const [schedule, setSchedule] = useState<Schedule>('DAY');
 
-  // Step 2: Lifestyle
+  // Step 3: Lifestyle
   const [smoker, setSmoker] = useState(false);
   const [pets, setPets] = useState(false);
 
-  // Step 3: Preferences
+  // Step 4: Preferences
   const [cleanliness, setCleanliness] = useState(3);
   const [noise, setNoise] = useState(3);
   const [visitors, setVisitors] = useState(3);
 
-  // Step 4: Budget
+  // Step 5: Budget
   const [budgetMin, setBudgetMin] = useState('');
   const [budgetMax, setBudgetMax] = useState('');
 
   const handleNext = () => {
+    if (step === 1 && !role) {
+      setError('Please select what you are looking for.');
+      return;
+    }
+    if (step === 1 && (role === 'SEEKER' || role === 'BOTH') && !preferredCity.trim()) {
+      setError('Please enter your preferred city.');
+      return;
+    }
+    setError('');
     if (step < totalSteps) {
       setStep(step + 1);
     }
   };
 
   const handleBack = () => {
+    setError('');
     if (step > 1) {
       setStep(step - 1);
     }
@@ -71,7 +87,11 @@ export default function OnboardingScreen() {
         budgetMin: minCents,
         budgetMax: maxCents,
       };
-      await userService.updateHabits(habits);
+      await userService.completeOnboarding({
+        role: role!,
+        preferredCity: (role === 'SEEKER' || role === 'BOTH') ? preferredCity.trim() : undefined,
+        habits,
+      });
       router.replace('/(tabs)');
     } catch (err: any) {
       const message =
@@ -164,7 +184,80 @@ export default function OnboardingScreen() {
     </View>
   );
 
+  const renderRoleCard = (
+    roleValue: Role,
+    icon: keyof typeof Ionicons.glyphMap,
+    title: string,
+    description: string
+  ) => {
+    const isActive = role === roleValue;
+    return (
+      <TouchableOpacity
+        style={[styles.roleCard, isActive && styles.roleCardActive]}
+        onPress={() => {
+          setRole(roleValue);
+          setError('');
+        }}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.roleIconContainer, isActive && styles.roleIconContainerActive]}>
+          <Ionicons
+            name={icon}
+            size={28}
+            color={isActive ? COLORS.surface : COLORS.primary}
+          />
+        </View>
+        <Text style={[styles.roleCardTitle, isActive && styles.roleCardTitleActive]}>
+          {title}
+        </Text>
+        <Text style={[styles.roleCardDescription, isActive && styles.roleCardDescriptionActive]}>
+          {description}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
   const renderStep1 = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.stepTitle}>What are you looking for?</Text>
+      <Text style={styles.stepDescription}>
+        Choose your role to get started.
+      </Text>
+
+      {error ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : null}
+
+      <View style={styles.roleCardsContainer}>
+        {renderRoleCard('SEEKER', 'search', 'Find a place to live', 'Browse listings and find your ideal home')}
+        {renderRoleCard('LANDLORD', 'key-outline', 'List my property', 'Post your property and find tenants')}
+        {renderRoleCard('BOTH', 'swap-horizontal', 'Both', 'Search for a place and list your property')}
+      </View>
+
+      {(role === 'SEEKER' || role === 'BOTH') && (
+        <View style={styles.cityInputSection}>
+          <Text style={styles.cityInputLabel}>Where do you want to live?</Text>
+          <View style={styles.cityInputWrapper}>
+            <Ionicons name="location-outline" size={20} color={COLORS.textSecondary} />
+            <TextInput
+              style={styles.cityInput}
+              placeholder="e.g. Lisbon, Porto, Barcelona..."
+              placeholderTextColor={COLORS.textLight}
+              value={preferredCity}
+              onChangeText={(text) => {
+                setPreferredCity(text);
+                setError('');
+              }}
+            />
+          </View>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderStep2 = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>Your Schedule</Text>
       <Text style={styles.stepDescription}>
@@ -187,7 +280,7 @@ export default function OnboardingScreen() {
     </View>
   );
 
-  const renderStep2 = () => (
+  const renderStep3 = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>Lifestyle</Text>
       <Text style={styles.stepDescription}>
@@ -212,7 +305,7 @@ export default function OnboardingScreen() {
     </View>
   );
 
-  const renderStep3 = () => (
+  const renderStep4 = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>Preferences</Text>
       <Text style={styles.stepDescription}>
@@ -224,7 +317,7 @@ export default function OnboardingScreen() {
     </View>
   );
 
-  const renderStep4 = () => (
+  const renderStep5 = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>Budget</Text>
       <Text style={styles.stepDescription}>
@@ -281,6 +374,7 @@ export default function OnboardingScreen() {
         {step === 2 && renderStep2()}
         {step === 3 && renderStep3()}
         {step === 4 && renderStep4()}
+        {step === 5 && renderStep5()}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -369,6 +463,76 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     lineHeight: 22,
   },
+  // Role selection cards
+  roleCardsContainer: {
+    gap: 12,
+  },
+  roleCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  roleCardActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
+  },
+  roleIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: COLORS.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  roleIconContainerActive: {
+    backgroundColor: COLORS.primary,
+  },
+  roleCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.text,
+    flex: 1,
+  },
+  roleCardTitleActive: {
+    color: COLORS.primaryDark,
+  },
+  roleCardDescription: {
+    display: 'none',
+  },
+  roleCardDescriptionActive: {
+    display: 'none',
+  },
+  cityInputSection: {
+    gap: 8,
+    marginTop: 4,
+  },
+  cityInputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  cityInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    gap: 10,
+  },
+  cityInput: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: COLORS.text,
+  },
+  // Toggle cards
   toggleRow: {
     flexDirection: 'row',
     gap: 12,

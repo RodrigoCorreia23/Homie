@@ -25,6 +25,10 @@ export async function createConnectAccount(userId: string) {
   const account = await stripe.accounts.create({
     type: 'express',
     email: user.email,
+    capabilities: {
+      card_payments: { requested: true },
+      transfers: { requested: true },
+    },
     metadata: { userId },
   });
 
@@ -441,6 +445,20 @@ export async function handleWebhookEvent(event: Stripe.Event) {
         amount: payment.netAmount,
         status: 'COMPLETED',
       });
+
+      break;
+    }
+
+    case 'account.updated': {
+      const account = event.data.object as Stripe.Account;
+      const ready = account.charges_enabled && account.payouts_enabled;
+
+      if (ready && account.metadata?.userId) {
+        await prisma.user.update({
+          where: { id: account.metadata.userId },
+          data: { stripeAccountReady: true },
+        });
+      }
 
       break;
     }

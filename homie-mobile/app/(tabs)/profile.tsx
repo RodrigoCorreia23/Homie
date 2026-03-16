@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -82,6 +83,18 @@ export default function ProfileScreen() {
                 <Ionicons name="person" size={40} color={COLORS.textLight} />
               </View>
             )}
+            <TouchableOpacity
+              style={styles.changePhotoButton}
+              onPress={() =>
+                Alert.alert(
+                  'Add Photo',
+                  'Photo upload ready - install expo-image-picker to enable camera/gallery access'
+                )
+              }
+              activeOpacity={0.7}
+            >
+              <Ionicons name="camera" size={16} color={COLORS.surface} />
+            </TouchableOpacity>
           </View>
 
           <Text style={styles.name}>{user?.name || 'User'}</Text>
@@ -257,6 +270,19 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  changePhotoButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: COLORS.primary,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.surface,
   },
   name: {
     fontSize: 22,

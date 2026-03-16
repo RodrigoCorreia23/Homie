@@ -17,7 +17,11 @@ model User {
   dateOfBirth  DateTime
   bio          String?
   city         String?
+  preferredCity String?
   role         UserRole @default(SEEKER)
+
+  // Push notifications
+  expoPushToken  String?
 
   // Stripe Connect
   stripeCustomerId   String?  @unique

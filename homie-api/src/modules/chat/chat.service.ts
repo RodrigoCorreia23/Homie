@@ -2,6 +2,7 @@ import { prisma } from '../../config/database';
 import { AppError } from '../../shared/middleware/errorHandler';
 import { getIO } from '../../socket';
 import { createNotification } from '../notification/notification.service';
+import { sendPushNotification } from '../../shared/utils/pushNotifications';
 
 export async function getConversations(userId: string) {
   const conversations = await prisma.conversation.findMany({
@@ -166,6 +167,14 @@ export async function sendMessage(
     await createNotification(
       otherMember.userId,
       'NEW_MESSAGE',
+      `New message from ${message.sender.name}`,
+      content.length > 100 ? content.substring(0, 100) + '...' : content,
+      { conversationId }
+    );
+
+    // Send push notification to the other user
+    await sendPushNotification(
+      otherMember.userId,
       `New message from ${message.sender.name}`,
       content.length > 100 ? content.substring(0, 100) + '...' : content,
       { conversationId }

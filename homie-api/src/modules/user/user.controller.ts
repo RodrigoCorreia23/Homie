@@ -58,6 +58,25 @@ export async function deletePhoto(req: AuthRequest, res: Response, next: NextFun
   }
 }
 
+export async function completeOnboarding(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const user = await userService.completeOnboarding(req.userId!, req.body);
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updatePushToken(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const { token } = req.body;
+    const result = await userService.updatePushToken(req.userId!, token);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getUser(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const user = await userService.getPublicProfile(req.params.id as string);

@@ -30,4 +30,18 @@ export const userService = {
     const response = await api.get(`/api/users/${userId}`);
     return response.data;
   },
+
+  completeOnboarding: async (data: {
+    role: string;
+    preferredCity?: string;
+    habits: any;
+  }) => {
+    const response = await api.post('/api/users/me/onboarding', data);
+    return response.data;
+  },
+
+  updatePushToken: async (token: string) => {
+    const response = await api.put('/api/users/me/push-token', { token });
+    return response.data;
+  },
 };

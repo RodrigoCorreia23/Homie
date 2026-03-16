@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from '../store/authStore';
 import { COLORS } from '../utils/constants';
+import { registerForPushNotifications } from '../utils/notifications';
 
 export default function RootLayout() {
   const { loadStoredAuth, isAuthenticated, isLoading } = useAuthStore();
@@ -10,6 +11,12 @@ export default function RootLayout() {
   useEffect(() => {
     loadStoredAuth();
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      registerForPushNotifications();
+    }
+  }, [isAuthenticated, isLoading]);
 
   return (
     <>

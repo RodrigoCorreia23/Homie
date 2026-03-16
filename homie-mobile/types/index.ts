@@ -6,6 +6,8 @@ export interface User {
   bio?: string;
   city?: string;
   role: string;
+  preferredCity?: string;
+  expoPushToken?: string;
   photos: UserPhoto[];
   habits?: Habits;
   stripeAccountReady?: boolean;
