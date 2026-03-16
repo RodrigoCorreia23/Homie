@@ -130,7 +130,10 @@ Solving the housing crisis for young people — students, remote workers, expats
 | **Validation** | Zod |
 | **Payments** | Stripe Connect (Express accounts) |
 | **Cron Jobs** | node-cron |
-| **Frontend** | React Native + Expo (planned) |
+| **Frontend** | React Native + Expo SDK 55 (TypeScript) |
+| **Navigation** | Expo Router (file-based) |
+| **State** | Zustand |
+| **API Client** | Axios with JWT interceptors + auto refresh |
 | **Hosting** | Render (backend + DB) |
 
 ---
@@ -139,7 +142,7 @@ Solving the housing crisis for young people — students, remote workers, expats
 
 ```
 Homie/
-├── homie-api/                          # Backend
+├── homie-api/                          # Backend (Node.js + Express + TypeScript)
 │   ├── src/
 │   │   ├── index.ts                    # Server entry point
 │   │   ├── app.ts                      # Express app + routes
@@ -169,13 +172,53 @@ Homie/
 │   │       └── listingExpiry.job.ts   # Expire 90-day listings
 │   ├── prisma/
 │   │   ├── schema.prisma              # Database schema (12 models)
+│   │   ├── migrations/                # SQL migration files
 │   │   └── seed.ts                    # Seed data (6 users, 5 listings)
 │   ├── test-api.js                    # Quick API test script
 │   ├── docker-compose.yml             # PostgreSQL
 │   ├── render.yaml                    # Render deployment config
 │   └── .env.example                   # Environment variables template
 │
-└── HOMIE_DOCUMENTATION.md             # This file
+├── homie-mobile/                       # Frontend (React Native + Expo SDK 55)
+│   ├── app/
+│   │   ├── _layout.tsx                 # Root layout (auth check)
+│   │   ├── index.tsx                   # Entry redirect
+│   │   ├── auth/
+│   │   │   ├── login.tsx               # Login screen
+│   │   │   ├── signup.tsx              # Registration screen
+│   │   │   └── onboarding.tsx          # 4-step habits questionnaire
+│   │   ├── (tabs)/
+│   │   │   ├── _layout.tsx             # Tab navigator (5 tabs)
+│   │   │   ├── explore.tsx             # Listing feed + filters + compatibility %
+│   │   │   ├── map.tsx                 # Map view with listing pins
+│   │   │   ├── favorites.tsx           # Saved listings
+│   │   │   ├── messages.tsx            # Conversation list
+│   │   │   ├── profile.tsx             # User profile + settings
+│   │   │   └── chat/
+│   │   │       └── [id].tsx            # Real-time chat screen
+│   │   └── listing/
+│   │       └── [id].tsx                # Listing detail + send interest
+│   ├── services/
+│   │   ├── api.ts                      # Axios instance + JWT interceptors
+│   │   ├── auth.service.ts             # Auth API calls
+│   │   ├── user.service.ts             # User/profile API calls
+│   │   ├── listing.service.ts          # Listings API calls
+│   │   ├── interest.service.ts         # Interest API calls
+│   │   ├── chat.service.ts             # Chat API calls
+│   │   ├── favorite.service.ts         # Favorites API calls
+│   │   ├── notification.service.ts     # Notification API calls
+│   │   └── socket.ts                   # Socket.io client singleton
+│   ├── store/
+│   │   ├── authStore.ts                # Auth state (Zustand)
+│   │   ├── listingStore.ts             # Listings + favorites state
+│   │   └── chatStore.ts                # Chat + conversations state
+│   ├── types/
+│   │   └── index.ts                    # All TypeScript interfaces
+│   ├── utils/
+│   │   └── constants.ts                # Colors, API URL
+│   └── app.json                        # Expo configuration
+│
+└── HOMIE_DOCUMENTATION.md              # This file
 ```
 
 ---
@@ -447,7 +490,7 @@ The seed (`prisma/seed.ts`) creates:
 - Node.js v18+
 - Docker Desktop (for PostgreSQL) or PostgreSQL installed locally
 
-### Setup
+### 1. Backend Setup
 
 ```bash
 cd homie-api
@@ -473,7 +516,28 @@ npm run dev
 # → API running at http://localhost:3001
 ```
 
-### Available Scripts
+### 2. Frontend Setup
+
+```bash
+cd homie-mobile
+
+# Install dependencies
+npm install --legacy-peer-deps
+
+# Start Expo (web)
+npx expo start --web
+# → Opens in browser at http://localhost:8081
+
+# Or for mobile:
+npx expo start
+# Then scan QR code with Expo Go (Android/iOS)
+```
+
+> **Note**: The backend must be running for the frontend to work. Open two terminal windows — one for each.
+
+> **Note**: For mobile devices, update `API_URL` in `homie-mobile/utils/constants.ts` to your computer's local IP (e.g., `http://192.168.1.100:3001`) instead of `localhost`.
+
+### Backend Scripts
 
 | Command | Description |
 |---------|-------------|
@@ -485,15 +549,40 @@ npm run dev
 | `npm run db:studio` | Open Prisma Studio (DB browser) |
 | `node test-api.js` | Quick API test (health, login, profile, listings, favorites) |
 
-### Testing
+### Frontend Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npx expo start` | Start Expo dev server |
+| `npx expo start --web` | Start for web browser |
+| `npx expo start --android` | Start for Android |
+| `npx expo start --ios` | Start for iOS (macOS only) |
+
+### Testing the API
 
 ```bash
-# With the server running:
+# With the backend running:
+cd homie-api
 node test-api.js
 
 # Or test individual endpoints:
 curl.exe http://localhost:3001/api/health
 ```
+
+### App Screens
+
+| Screen | Route | Description |
+|--------|-------|-------------|
+| Login | `/auth/login` | Email + password login |
+| Signup | `/auth/signup` | Registration with name, email, password, DOB |
+| Onboarding | `/auth/onboarding` | 4-step habits questionnaire (schedule, lifestyle, preferences, budget) |
+| Explore | `/(tabs)/explore` | Listing feed with filters, type chips, compatibility % |
+| Map | `/(tabs)/map` | Map view with listing pins and bottom sheet preview |
+| Favorites | `/(tabs)/favorites` | Saved listings with remove option |
+| Messages | `/(tabs)/messages` | Conversations list with last message preview |
+| Chat | `/(tabs)/chat/[id]` | Real-time messaging with typing indicators |
+| Profile | `/(tabs)/profile` | User profile, habits summary, logout |
+| Listing Detail | `/listing/[id]` | Full listing with photos, details, send interest modal |
 
 ---
 
@@ -562,6 +651,14 @@ The `render.yaml` configures:
 | **Expats / Digital nomads** | Need furnished rooms, short-term, trust is key |
 | **Erasmus students** | International, 6-month stays, need compatible roommates |
 | **Landlords with rooms** | Want reliable tenants, hate managing payments manually |
+
+---
+
+## GitHub Repository
+
+- **Repository:** https://github.com/RodrigoCorreia23/Homie
+- **Clone:** `git clone git@github.com:RodrigoCorreia23/Homie.git`
+- **Visibility:** Private
 
 ---
 
