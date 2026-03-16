@@ -13,7 +13,7 @@ export async function createListing(req: AuthRequest, res: Response, next: NextF
 
 export async function getListingFeed(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const result = await listingService.getListingFeed(req.userId!, req.query as any);
+    const result = await listingService.getListingFeed(req.userId!, (req as any).validatedQuery || req.query);
     res.json(result);
   } catch (err) {
     next(err);

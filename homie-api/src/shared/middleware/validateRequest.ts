@@ -17,7 +17,7 @@ export function validateRequest(schema: ZodSchema) {
 }
 
 export function validateQuery(schema: ZodSchema) {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request & { validatedQuery?: any }, res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.query);
     if (!result.success) {
       res.status(400).json({
@@ -26,7 +26,7 @@ export function validateQuery(schema: ZodSchema) {
       });
       return;
     }
-    req.query = result.data as typeof req.query;
+    req.validatedQuery = result.data;
     next();
   };
 }

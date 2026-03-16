@@ -23,6 +23,6 @@ export function errorHandler(
     return;
   }
 
-  console.error('Unexpected error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+  console.error('Unexpected error:', err.message, err.stack);
+  res.status(500).json({ error: 'Internal server error', ...(process.env.NODE_ENV === 'development' && { details: err.message }) });
 }

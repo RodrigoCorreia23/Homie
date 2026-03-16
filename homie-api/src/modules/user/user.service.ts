@@ -14,7 +14,8 @@ export async function getProfile(userId: string) {
     throw new AppError('User not found', 404);
   }
 
-  return user;
+  const { passwordHash, refreshToken, ...safeUser } = user;
+  return safeUser;
 }
 
 export async function getPublicProfile(userId: string) {
