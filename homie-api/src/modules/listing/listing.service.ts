@@ -59,15 +59,21 @@ export async function getListingFeed(userId: string, filters: ListingFeedFilters
   const { page, limit, sortBy } = filters;
   const skip = (page - 1) * limit;
 
-  // If no city filter provided, use the user's preferredCity as default
-  let cityFilter = filters.city;
-  if (!cityFilter) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { preferredCity: true },
-    });
-    if (user?.preferredCity) {
-      cityFilter = user.preferredCity;
+  // Get user's preferred location for geo defaults
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { preferredCity: true, preferredLatitude: true, preferredLongitude: true },
+  });
+
+  // Resolve geo coordinates: explicit filters > user's preferred location
+  let searchLat = filters.lat;
+  let searchLng = filters.lng;
+  let searchRadius = filters.radius || 50; // default 50km
+
+  if (searchLat === undefined && searchLng === undefined) {
+    if (user?.preferredLatitude && user?.preferredLongitude) {
+      searchLat = user.preferredLatitude;
+      searchLng = user.preferredLongitude;
     }
   }
 
@@ -76,7 +82,18 @@ export async function getListingFeed(userId: string, filters: ListingFeedFilters
     status: 'ACTIVE',
   };
 
-  if (cityFilter) where.city = cityFilter;
+  // Use geo bounding box when we have coordinates (preferred approach)
+  if (searchLat !== undefined && searchLng !== undefined) {
+    const box = boundingBox(searchLat, searchLng, searchRadius);
+    where.latitude = { gte: box.minLat, lte: box.maxLat };
+    where.longitude = { gte: box.minLng, lte: box.maxLng };
+  } else if (filters.city) {
+    // Fallback to text city filter if no coordinates available
+    where.city = { contains: filters.city, mode: 'insensitive' };
+  } else if (user?.preferredCity) {
+    where.city = { contains: user.preferredCity, mode: 'insensitive' };
+  }
+
   if (filters.type) where.type = filters.type;
   if (filters.furnished !== undefined) where.furnished = filters.furnished;
   if (filters.billsIncluded !== undefined) where.billsIncluded = filters.billsIncluded;
@@ -88,13 +105,6 @@ export async function getListingFeed(userId: string, filters: ListingFeedFilters
     where.pricePerMonth = {};
     if (filters.minPrice) where.pricePerMonth.gte = filters.minPrice;
     if (filters.maxPrice) where.pricePerMonth.lte = filters.maxPrice;
-  }
-
-  // Geo bounding box filter
-  if (filters.lat !== undefined && filters.lng !== undefined && filters.radius) {
-    const box = boundingBox(filters.lat, filters.lng, filters.radius);
-    where.latitude = { gte: box.minLat, lte: box.maxLat };
-    where.longitude = { gte: box.minLng, lte: box.maxLng };
   }
 
   // Determine ordering for DB query
@@ -146,21 +156,15 @@ export async function getListingFeed(userId: string, filters: ListingFeedFilters
       );
     }
 
-    // Calculate distance if coordinates provided
-    if (filters.lat !== undefined && filters.lng !== undefined) {
+    // Calculate distance from search center
+    if (searchLat !== undefined && searchLng !== undefined) {
       distance = Math.round(
-        haversineDistance(filters.lat, filters.lng, listing.latitude, listing.longitude) * 10,
+        haversineDistance(searchLat, searchLng, listing.latitude, listing.longitude) * 10,
       ) / 10;
     }
 
     // Filter by exact haversine distance (bounding box is approximate)
-    if (
-      filters.lat !== undefined &&
-      filters.lng !== undefined &&
-      filters.radius &&
-      distance !== null &&
-      distance > filters.radius
-    ) {
+    if (distance !== null && distance > searchRadius) {
       return null;
     }
 
@@ -171,12 +175,22 @@ export async function getListingFeed(userId: string, filters: ListingFeedFilters
     };
   }).filter(Boolean);
 
-  // Sort by compatibility or distance (can't do these in DB)
-  if (sortBy === 'compatibility') {
+  // Default sort by distance when geo search is active, otherwise by date
+  const effectiveSort = sortBy || (searchLat !== undefined ? 'distance' : 'date');
+
+  if (effectiveSort === 'compatibility') {
     enriched.sort((a, b) => (b!.compatibility ?? 0) - (a!.compatibility ?? 0));
-  } else if (sortBy === 'distance') {
+  } else if (effectiveSort === 'distance') {
     enriched.sort((a, b) => (a!.distance ?? Infinity) - (b!.distance ?? Infinity));
   }
+
+  // Boosted listings always float to the top
+  const now = new Date();
+  enriched.sort((a, b) => {
+    const aBoosted = a!.boostedUntil && new Date(a!.boostedUntil) > now ? 1 : 0;
+    const bBoosted = b!.boostedUntil && new Date(b!.boostedUntil) > now ? 1 : 0;
+    return bBoosted - aBoosted; // boosted first
+  });
 
   return {
     listings: enriched,

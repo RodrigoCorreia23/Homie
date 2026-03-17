@@ -13,8 +13,10 @@ import {
 import { router } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 import { COLORS } from '../../utils/constants';
+import { useT } from '../../utils/i18n';
 
 export default function LoginScreen() {
+  const t = useT();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -24,7 +26,7 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     setError('');
     if (!email.trim() || !password.trim()) {
-      setError('Please fill in all fields.');
+      setError(t('Preenche todos os campos.'));
       return;
     }
 
@@ -34,7 +36,7 @@ export default function LoginScreen() {
       router.replace('/(tabs)');
     } catch (err: any) {
       const message =
-        err?.response?.data?.message || 'Login failed. Please try again.';
+        err?.response?.data?.message || t('Falha no login. Tenta novamente.');
       setError(message);
     } finally {
       setLoading(false);
@@ -57,7 +59,7 @@ export default function LoginScreen() {
             </View>
             <Text style={styles.title}>Homie</Text>
             <Text style={styles.subtitle}>
-              Find your perfect place and people
+              {t('Encontra o sítio e as pessoas ideais')}
             </Text>
           </View>
 
@@ -69,10 +71,10 @@ export default function LoginScreen() {
             ) : null}
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>{t('E-mail')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="your@email.com"
+                placeholder={t("o-teu@email.com")}
                 placeholderTextColor={COLORS.textLight}
                 value={email}
                 onChangeText={setEmail}
@@ -83,10 +85,10 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={styles.label}>{t('Palavra-passe')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your password"
+                placeholder={t("Insere a tua palavra-passe")}
                 placeholderTextColor={COLORS.textLight}
                 value={password}
                 onChangeText={setPassword}
@@ -103,7 +105,7 @@ export default function LoginScreen() {
               {loading ? (
                 <ActivityIndicator color={COLORS.surface} />
               ) : (
-                <Text style={styles.buttonText}>Log In</Text>
+                <Text style={styles.buttonText}>{t('Entrar')}</Text>
               )}
             </TouchableOpacity>
 
@@ -112,8 +114,8 @@ export default function LoginScreen() {
               onPress={() => router.push('/auth/signup')}
             >
               <Text style={styles.linkText}>
-                Don't have an account?{' '}
-                <Text style={styles.linkHighlight}>Sign up</Text>
+                {t('Não tens conta?')}{' '}
+                <Text style={styles.linkHighlight}>{t('Criar conta')}</Text>
               </Text>
             </TouchableOpacity>
           </View>

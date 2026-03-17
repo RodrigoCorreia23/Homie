@@ -13,9 +13,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useChatStore } from '../../store/chatStore';
 import { useAuthStore } from '../../store/authStore';
 import { COLORS } from '../../utils/constants';
+import { useT } from '../../utils/i18n';
 import type { Conversation } from '../../types';
 
 export default function MessagesScreen() {
+  const t = useT();
   const { conversations, isLoading, fetchConversations } = useChatStore();
   const { user } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -46,11 +48,11 @@ export default function MessagesScreen() {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return 'Now';
+    if (diffMins < 1) return t('Agora');
     if (diffMins < 60) return `${diffMins}m`;
     if (diffHours < 24) return `${diffHours}h`;
     if (diffDays < 7) return `${diffDays}d`;
-    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return date.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' });
   };
 
   const renderConversation = ({ item }: { item: Conversation }) => {
@@ -58,7 +60,7 @@ export default function MessagesScreen() {
     const otherName =
       (otherUser as any)?.user?.name ||
       (otherUser as any)?.name ||
-      'Unknown User';
+      t('Utilizador');
     const otherPhoto =
       (otherUser as any)?.user?.photos?.[0]?.url ||
       (otherUser as any)?.photos?.[0]?.url;
@@ -94,7 +96,7 @@ export default function MessagesScreen() {
           </View>
           <View style={styles.conversationFooter}>
             <Text style={styles.conversationPreview} numberOfLines={1}>
-              {lastMessage?.content || 'No messages yet'}
+              {lastMessage?.content || t('Ainda sem mensagens')}
             </Text>
             {unreadCount > 0 && (
               <View style={styles.unreadBadge}>
@@ -112,7 +114,7 @@ export default function MessagesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Messages</Text>
+        <Text style={styles.headerTitle}>{t('Mensagens')}</Text>
       </View>
 
       <FlatList
@@ -136,9 +138,9 @@ export default function MessagesScreen() {
               size={64}
               color={COLORS.textLight}
             />
-            <Text style={styles.emptyTitle}>No conversations yet</Text>
+            <Text style={styles.emptyTitle}>{t('Sem conversas')}</Text>
             <Text style={styles.emptySubtitle}>
-              Send an interest on a listing to start chatting
+              {t('Envia um interesse num anúncio para começar a conversar')}
             </Text>
           </View>
         }

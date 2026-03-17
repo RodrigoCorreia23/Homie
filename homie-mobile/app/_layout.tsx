@@ -2,14 +2,17 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from '../store/authStore';
+import { useLanguageStore } from '../store/languageStore';
 import { COLORS } from '../utils/constants';
 import { registerForPushNotifications } from '../utils/notifications';
 
 export default function RootLayout() {
   const { loadStoredAuth, isAuthenticated, isLoading } = useAuthStore();
+  const { loadLang } = useLanguageStore();
 
   useEffect(() => {
     loadStoredAuth();
+    loadLang();
   }, []);
 
   useEffect(() => {

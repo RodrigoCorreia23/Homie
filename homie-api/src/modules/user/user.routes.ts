@@ -15,6 +15,7 @@ router.put('/me/habits', validateRequest(updateHabitsSchema), userController.upd
 router.post('/me/photos', validateRequest(addPhotoSchema), userController.addPhoto);
 router.delete('/me/photos/:photoId', userController.deletePhoto);
 router.put('/me/push-token', userController.updatePushToken);
+router.get('/seekers', userController.discoverSeekers);
 router.get('/:id', userController.getUser);
 
 export default router;

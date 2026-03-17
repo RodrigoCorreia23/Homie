@@ -1,5 +1,5 @@
 import api from './api';
-import { User, Habits, UserPhoto } from '../types';
+import { User, Habits, UserPhoto, SeekerFeedResponse } from '../types';
 
 export const userService = {
   getProfile: async (): Promise<User> => {
@@ -33,8 +33,11 @@ export const userService = {
 
   completeOnboarding: async (data: {
     role: string;
+    gender?: string;
     preferredCity?: string;
-    habits: any;
+    preferredCities?: string[];
+    habits?: any;
+    houseRules?: any;
   }) => {
     const response = await api.post('/api/users/me/onboarding', data);
     return response.data;
@@ -42,6 +45,18 @@ export const userService = {
 
   updatePushToken: async (token: string) => {
     const response = await api.put('/api/users/me/push-token', { token });
+    return response.data;
+  },
+
+  discoverSeekers: async (filters?: {
+    city?: string;
+    lat?: number;
+    lng?: number;
+    radius?: number;
+    page?: number;
+    limit?: number;
+  }): Promise<SeekerFeedResponse> => {
+    const response = await api.get('/api/users/seekers', { params: filters });
     return response.data;
   },
 };

@@ -1,3 +1,5 @@
+export type UserGender = 'MALE' | 'FEMALE' | 'OTHER';
+
 export interface User {
   id: string;
   email: string;
@@ -6,10 +8,15 @@ export interface User {
   bio?: string;
   city?: string;
   role: string;
+  gender?: UserGender;
   preferredCity?: string;
+  preferredCities?: string[];
+  preferredLatitude?: number;
+  preferredLongitude?: number;
   expoPushToken?: string;
   photos: UserPhoto[];
   habits?: Habits;
+  houseRules?: HouseRules;
   stripeAccountReady?: boolean;
   createdAt: string;
 }
@@ -29,6 +36,23 @@ export interface Habits {
   visitors: 1 | 2 | 3 | 4 | 5;
   budgetMin?: number;
   budgetMax?: number;
+}
+
+export type SmokingPolicy = 'NOT_ALLOWED' | 'OUTSIDE_ONLY' | 'ALLOWED';
+export type PetsPolicy = 'NOT_ALLOWED' | 'SMALL_ONLY' | 'ALLOWED';
+export type PartiesPolicy = 'NOT_ALLOWED' | 'OCCASIONAL' | 'ALLOWED';
+export type OvernightGuestsPolicy = 'NOT_ALLOWED' | 'WITH_NOTICE' | 'ALLOWED';
+
+export interface HouseRules {
+  smokingPolicy: SmokingPolicy;
+  petsPolicy: PetsPolicy;
+  partiesPolicy: PartiesPolicy;
+  overnightGuests: OvernightGuestsPolicy;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  cleanlinessLevel: 1 | 2 | 3 | 4 | 5;
+  preferredGender?: 'MALE' | 'FEMALE' | 'ANY';
+  maxOccupants?: number;
 }
 
 export interface ListingPhoto {
@@ -57,6 +81,7 @@ export interface Listing {
   petsAllowed: boolean;
   preferredGender?: string;
   status: string;
+  boostedUntil?: string;
   photos: ListingPhoto[];
   owner?: User;
   compatibility?: number;
@@ -134,6 +159,29 @@ export interface Payment {
   dueDate: string;
   paidAt?: string;
   receiptUrl?: string;
+}
+
+export interface SeekerProfile {
+  id: string;
+  name: string;
+  bio?: string;
+  gender?: UserGender;
+  preferredCity?: string;
+  city?: string;
+  createdAt: string;
+  photos: UserPhoto[];
+  habits?: Habits;
+  distance?: number;
+}
+
+export interface SeekerFeedResponse {
+  seekers: SeekerProfile[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface AuthResponse {

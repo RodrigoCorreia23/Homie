@@ -17,8 +17,12 @@ model User {
   dateOfBirth  DateTime
   bio          String?
   city         String?
-  preferredCity String?
+  preferredCity      String?            // Primary city (first in list)
+  preferredCities    String[]   @default([])
+  preferredLatitude  Float?             // Coords of primary city
+  preferredLongitude Float?
   role         UserRole @default(SEEKER)
+  gender       UserGender?
 
   // Push notifications
   expoPushToken  String?
@@ -34,6 +38,7 @@ model User {
 
   photos        UserPhoto[]
   habits        Habits?
+  houseRules    HouseRules?
   listings      Listing[]        @relation("OwnerListings")
   sentInterests Interest[]       @relation("SentInterests")
   conversations ConversationMember[]
@@ -48,6 +53,12 @@ model User {
 
   @@index([city])
   @@map("users")
+}
+
+enum UserGender {
+  MALE
+  FEMALE
+  OTHER
 }
 
 enum UserRole {
@@ -88,6 +99,50 @@ enum Schedule {
   NIGHT
 }
 
+// ─── HOUSE RULES (Landlord defaults) ─────────────────────
+
+model HouseRules {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  smokingPolicy       SmokingPolicy       @default(NOT_ALLOWED)
+  petsPolicy          PetsPolicy          @default(NOT_ALLOWED)
+  partiesPolicy       PartiesPolicy       @default(NOT_ALLOWED)
+  overnightGuests     OvernightGuestsPolicy @default(WITH_NOTICE)
+  quietHoursStart     String?             // e.g. "23:00"
+  quietHoursEnd       String?             // e.g. "08:00"
+  cleanlinessLevel    Int                 // 1-5 expectation
+  preferredGender     Gender?
+  maxOccupants        Int?
+
+  @@map("house_rules")
+}
+
+enum SmokingPolicy {
+  NOT_ALLOWED
+  OUTSIDE_ONLY
+  ALLOWED
+}
+
+enum PetsPolicy {
+  NOT_ALLOWED
+  SMALL_ONLY
+  ALLOWED
+}
+
+enum PartiesPolicy {
+  NOT_ALLOWED
+  OCCASIONAL
+  ALLOWED
+}
+
+enum OvernightGuestsPolicy {
+  NOT_ALLOWED
+  WITH_NOTICE
+  ALLOWED
+}
+
 // ─── LISTINGS ─────────────────────────────────────────────
 
 model Listing {
@@ -116,6 +171,10 @@ model Listing {
   smokersAllowed  Boolean @default(false)
   petsAllowed     Boolean @default(false)
   preferredGender Gender?
+
+  // Boost
+  boostedUntil          DateTime?
+  boostStripePaymentId  String?
 
   status    ListingStatus @default(ACTIVE)
   createdAt DateTime      @default(now())

@@ -16,6 +16,7 @@ export interface ListingFilters {
   latitude?: number;
   longitude?: number;
   radius?: number;
+  sortBy?: 'price' | 'compatibility' | 'date' | 'distance';
 }
 
 export const listingService = {
@@ -64,8 +65,43 @@ export const listingService = {
     await api.delete(`/api/listings/${id}`);
   },
 
+  addPhoto: async (listingId: string, url: string, position: number) => {
+    const response = await api.post(`/api/listings/${listingId}/photos`, { url, position });
+    return response.data;
+  },
+
+  deletePhoto: async (listingId: string, photoId: string) => {
+    await api.delete(`/api/listings/${listingId}/photos/${photoId}`);
+  },
+
   updateStatus: async (id: string, status: string): Promise<Listing> => {
     const response = await api.patch(`/api/listings/${id}/status`, { status });
+    return response.data;
+  },
+
+  // Boost
+  getBoostTiers: async () => {
+    const response = await api.get('/api/listings/boost/tiers');
+    return response.data as Array<{
+      id: string;
+      days: number;
+      price: number;
+      label: string;
+      priceFormatted: string;
+    }>;
+  },
+
+  createBoost: async (listingId: string, tier: string) => {
+    const response = await api.post(`/api/listings/${listingId}/boost`, { tier });
+    return response.data as {
+      clientSecret: string;
+      paymentIntentId: string;
+      amount: number;
+    };
+  },
+
+  confirmBoost: async (listingId: string, paymentIntentId: string) => {
+    const response = await api.post(`/api/listings/${listingId}/boost/confirm`, { paymentIntentId });
     return response.data;
   },
 };

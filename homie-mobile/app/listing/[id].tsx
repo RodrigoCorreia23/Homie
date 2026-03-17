@@ -11,17 +11,21 @@ import {
   ActivityIndicator,
   Modal,
 } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Alert } from 'react-native';
 import { listingService } from '../../services/listing.service';
 import { interestService } from '../../services/interest.service';
 import { useListingStore } from '../../store/listingStore';
+import { useAuthStore } from '../../store/authStore';
 import { COLORS } from '../../utils/constants';
+import { useT } from '../../utils/i18n';
 import type { Listing } from '../../types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ListingDetailScreen() {
+  const t = useT();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,8 +36,10 @@ export default function ListingDetailScreen() {
   const [interestSent, setInterestSent] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const { favorites, toggleFavorite } = useListingStore();
+  const { user } = useAuthStore();
 
   const isFavorited = favorites.some((f) => f.listingId === id);
+  const isOwner = listing?.ownerId === user?.id;
 
   useEffect(() => {
     if (id) {
@@ -55,6 +61,40 @@ export default function ListingDetailScreen() {
 
   const handleToggleFavorite = () => {
     if (id) toggleFavorite(id);
+  };
+
+  const handleToggleStatus = () => {
+    if (!listing) return;
+    const newStatus = listing.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+    const label = newStatus === 'ACTIVE' ? t('ativar') : t('pausar');
+    Alert.alert(`${label.charAt(0).toUpperCase() + label.slice(1)} ${t('anúncio')}`, `${t('Queres')} ${label} ${t('este anúncio?')}`, [
+      { text: t('Cancelar'), style: 'cancel' },
+      {
+        text: t('Confirmar'),
+        onPress: async () => {
+          try {
+            const updated = await listingService.updateStatus(id!, newStatus);
+            setListing(updated);
+          } catch { /* ignore */ }
+        },
+      },
+    ]);
+  };
+
+  const handleDelete = () => {
+    Alert.alert(t('Apagar anúncio'), t('Esta ação é irreversível. Tens a certeza?'), [
+      { text: t('Cancelar'), style: 'cancel' },
+      {
+        text: t('Apagar'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await listingService.deleteListing(id!);
+            router.back();
+          } catch { /* ignore */ }
+        },
+      },
+    ]);
   };
 
   const handleSendInterest = async () => {
@@ -79,7 +119,7 @@ export default function ListingDetailScreen() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-GB', {
+    return date.toLocaleDateString('pt-PT', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -99,7 +139,7 @@ export default function ListingDetailScreen() {
           options={{
             headerShown: true,
             headerTitle: '',
-            headerBackTitle: 'Back',
+            headerBackTitle: t('Voltar'),
             headerTintColor: COLORS.primary,
             headerStyle: { backgroundColor: COLORS.surface },
           }}
@@ -118,14 +158,14 @@ export default function ListingDetailScreen() {
           options={{
             headerShown: true,
             headerTitle: '',
-            headerBackTitle: 'Back',
+            headerBackTitle: t('Voltar'),
             headerTintColor: COLORS.primary,
             headerStyle: { backgroundColor: COLORS.surface },
           }}
         />
         <View style={styles.loadingContainer}>
           <Ionicons name="alert-circle-outline" size={48} color={COLORS.textLight} />
-          <Text style={styles.errorText}>Listing not found</Text>
+          <Text style={styles.errorText}>{t('Anúncio não encontrado')}</Text>
         </View>
       </>
     );
@@ -139,7 +179,7 @@ export default function ListingDetailScreen() {
         options={{
           headerShown: true,
           headerTitle: '',
-          headerBackTitle: 'Back',
+          headerBackTitle: t('Voltar'),
           headerTintColor: COLORS.primary,
           headerStyle: { backgroundColor: COLORS.surface },
           headerRight: () => (
@@ -202,7 +242,7 @@ export default function ListingDetailScreen() {
                 size={48}
                 color={COLORS.textLight}
               />
-              <Text style={styles.carouselPlaceholderText}>No photos</Text>
+              <Text style={styles.carouselPlaceholderText}>{t('Sem fotos')}</Text>
             </View>
           )}
         </View>
@@ -213,7 +253,7 @@ export default function ListingDetailScreen() {
             <Text style={styles.title}>{listing.title}</Text>
             <Text style={styles.price}>
               EUR {formatPrice(listing.pricePerMonth)}
-              <Text style={styles.priceUnit}>/month</Text>
+              <Text style={styles.priceUnit}>{t('/mês')}</Text>
             </Text>
           </View>
 
@@ -237,7 +277,7 @@ export default function ListingDetailScreen() {
               <View style={styles.compatBadge}>
                 <Ionicons name="heart-circle" size={20} color={COLORS.success} />
                 <Text style={styles.compatText}>
-                  {listing.compatibility}% compatibility
+                  {listing.compatibility}% {t('compatibilidade')}
                 </Text>
               </View>
             </View>
@@ -245,21 +285,21 @@ export default function ListingDetailScreen() {
 
           {/* Details */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Details</Text>
+            <Text style={styles.sectionTitle}>{t('Detalhes')}</Text>
             <View style={styles.detailsGrid}>
               <View style={styles.detailItem}>
                 <Ionicons name="bed-outline" size={20} color={COLORS.primary} />
                 <Text style={styles.detailValue}>
                   {listing.bedrooms}
                 </Text>
-                <Text style={styles.detailLabel}>Bedrooms</Text>
+                <Text style={styles.detailLabel}>{t('Quartos')}</Text>
               </View>
               <View style={styles.detailItem}>
                 <Ionicons name="water-outline" size={20} color={COLORS.primary} />
                 <Text style={styles.detailValue}>
                   {listing.bathrooms}
                 </Text>
-                <Text style={styles.detailLabel}>Bathrooms</Text>
+                <Text style={styles.detailLabel}>{t('Casas de banho')}</Text>
               </View>
               <View style={styles.detailItem}>
                 <Ionicons
@@ -268,9 +308,9 @@ export default function ListingDetailScreen() {
                   color={listing.furnished ? COLORS.success : COLORS.textLight}
                 />
                 <Text style={styles.detailValue}>
-                  {listing.furnished ? 'Yes' : 'No'}
+                  {listing.furnished ? t('Sim') : t('Não')}
                 </Text>
-                <Text style={styles.detailLabel}>Furnished</Text>
+                <Text style={styles.detailLabel}>{t('Mobilado')}</Text>
               </View>
               <View style={styles.detailItem}>
                 <Ionicons
@@ -285,9 +325,9 @@ export default function ListingDetailScreen() {
                   }
                 />
                 <Text style={styles.detailValue}>
-                  {listing.billsIncluded ? 'Yes' : 'No'}
+                  {listing.billsIncluded ? t('Sim') : t('Não')}
                 </Text>
-                <Text style={styles.detailLabel}>Bills Incl.</Text>
+                <Text style={styles.detailLabel}>{t('Contas incl.')}</Text>
               </View>
             </View>
           </View>
@@ -300,13 +340,13 @@ export default function ListingDetailScreen() {
               color={COLORS.primary}
             />
             <Text style={styles.infoText}>
-              Available from {formatDate(listing.availableFrom)}
+              {t('Disponível a partir de')} {formatDate(listing.availableFrom)}
             </Text>
           </View>
 
           {/* House Rules */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>House Rules</Text>
+            <Text style={styles.sectionTitle}>{t('Regras da casa')}</Text>
             <View style={styles.rulesContainer}>
               <View style={styles.ruleItem}>
                 <Ionicons
@@ -318,8 +358,8 @@ export default function ListingDetailScreen() {
                 />
                 <Text style={styles.ruleText}>
                   {listing.smokersAllowed
-                    ? 'Smokers allowed'
-                    : 'No smoking'}
+                    ? t('Permitido fumar')
+                    : t('Proibido fumar')}
                 </Text>
               </View>
               <View style={styles.ruleItem}>
@@ -329,7 +369,7 @@ export default function ListingDetailScreen() {
                   color={listing.petsAllowed ? COLORS.success : COLORS.error}
                 />
                 <Text style={styles.ruleText}>
-                  {listing.petsAllowed ? 'Pets allowed' : 'No pets'}
+                  {listing.petsAllowed ? t('Animais permitidos') : t('Sem animais')}
                 </Text>
               </View>
               {listing.preferredGender && listing.preferredGender !== 'ANY' && (
@@ -340,7 +380,7 @@ export default function ListingDetailScreen() {
                     color={COLORS.primary}
                   />
                   <Text style={styles.ruleText}>
-                    Preferred: {listing.preferredGender.toLowerCase()}
+                    {t('Preferência:')} {listing.preferredGender === 'MALE' ? t('masculino') : t('feminino')}
                   </Text>
                 </View>
               )}
@@ -350,7 +390,7 @@ export default function ListingDetailScreen() {
           {/* Description */}
           {listing.description && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Description</Text>
+              <Text style={styles.sectionTitle}>{t('Descrição')}</Text>
               <Text style={styles.description}>{listing.description}</Text>
             </View>
           )}
@@ -358,7 +398,7 @@ export default function ListingDetailScreen() {
           {/* Owner */}
           {listing.owner && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Listed by</Text>
+              <Text style={styles.sectionTitle}>{t('Publicado por')}</Text>
               <View style={styles.ownerCard}>
                 <View style={styles.ownerAvatarContainer}>
                   {listing.owner.photos?.[0]?.url ? (
@@ -387,24 +427,48 @@ export default function ListingDetailScreen() {
 
       {/* Bottom Action Bar */}
       <View style={styles.actionBar}>
-        <TouchableOpacity
-          style={[
-            styles.interestButton,
-            interestSent && styles.interestButtonSent,
-          ]}
-          onPress={() => !interestSent && setShowInterestModal(true)}
-          disabled={interestSent}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name={interestSent ? 'checkmark-circle' : 'hand-right-outline'}
-            size={20}
-            color={COLORS.surface}
-          />
-          <Text style={styles.interestButtonText}>
-            {interestSent ? 'Interest Sent' : 'Send Interest'}
-          </Text>
-        </TouchableOpacity>
+        {isOwner ? (
+          <View style={styles.ownerActions}>
+            <TouchableOpacity
+              style={[styles.ownerBtn, styles.ownerBtnPause]}
+              onPress={handleToggleStatus}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={listing.status === 'ACTIVE' ? 'pause-circle-outline' : 'play-circle-outline'}
+                size={20}
+                color={listing.status === 'ACTIVE' ? '#D97706' : COLORS.success}
+              />
+              <Text style={[styles.ownerBtnText, { color: listing.status === 'ACTIVE' ? '#D97706' : COLORS.success }]}>
+                {listing.status === 'ACTIVE' ? t('Pausar') : t('Ativar')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.ownerBtn, styles.ownerBtnDelete]}
+              onPress={handleDelete}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="trash-outline" size={20} color={COLORS.error} />
+              <Text style={[styles.ownerBtnText, { color: COLORS.error }]}>{t('Apagar')}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[styles.interestButton, interestSent && styles.interestButtonSent]}
+            onPress={() => !interestSent && setShowInterestModal(true)}
+            disabled={interestSent}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={interestSent ? 'checkmark-circle' : 'hand-right-outline'}
+              size={20}
+              color={COLORS.surface}
+            />
+            <Text style={styles.interestButtonText}>
+              {interestSent ? t('Interesse enviado') : t('Enviar interesse')}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Interest Modal */}
@@ -417,7 +481,7 @@ export default function ListingDetailScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Send Interest</Text>
+              <Text style={styles.modalTitle}>{t('Enviar interesse')}</Text>
               <TouchableOpacity
                 onPress={() => setShowInterestModal(false)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -427,12 +491,12 @@ export default function ListingDetailScreen() {
             </View>
 
             <Text style={styles.modalSubtitle}>
-              Add an optional message to introduce yourself
+              {t('Adiciona uma mensagem opcional para te apresentares')}
             </Text>
 
             <TextInput
               style={styles.modalInput}
-              placeholder="Hi! I'm interested in this listing..."
+              placeholder={t("Olá! Estou interessado neste anúncio...")}
               placeholderTextColor={COLORS.textLight}
               value={interestMessage}
               onChangeText={setInterestMessage}
@@ -454,7 +518,7 @@ export default function ListingDetailScreen() {
               {sendingInterest ? (
                 <ActivityIndicator color={COLORS.surface} />
               ) : (
-                <Text style={styles.modalButtonText}>Send Interest</Text>
+                <Text style={styles.modalButtonText}>{t('Enviar interesse')}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -717,6 +781,32 @@ const styles = StyleSheet.create({
   },
   interestButtonSent: {
     backgroundColor: COLORS.success,
+  },
+  ownerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  ownerBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  ownerBtnPause: {
+    borderColor: '#FDE68A',
+    backgroundColor: '#FFFBEB',
+  },
+  ownerBtnDelete: {
+    borderColor: '#FECACA',
+    backgroundColor: '#FEF2F2',
+  },
+  ownerBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
   },
   interestButtonText: {
     color: COLORS.surface,

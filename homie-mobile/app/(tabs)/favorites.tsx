@@ -12,9 +12,11 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useListingStore } from '../../store/listingStore';
 import { COLORS } from '../../utils/constants';
+import { useT } from '../../utils/i18n';
 import type { Favorite } from '../../types';
 
 export default function FavoritesScreen() {
+  const t = useT();
   const { favorites, isLoading, fetchFavorites, toggleFavorite } =
     useListingStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -82,7 +84,7 @@ export default function FavoritesScreen() {
           <View style={styles.cardFooter}>
             <Text style={styles.cardPrice}>
               EUR {formatPrice(listing.pricePerMonth)}
-              <Text style={styles.cardPriceUnit}>/month</Text>
+              <Text style={styles.cardPriceUnit}>{t('/mês')}</Text>
             </Text>
             <View style={styles.typeBadge}>
               <Text style={styles.typeBadgeText}>{listing.type}</Text>
@@ -96,9 +98,9 @@ export default function FavoritesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Favorites</Text>
+        <Text style={styles.headerTitle}>{t('Favoritos')}</Text>
         <Text style={styles.headerSubtitle}>
-          {favorites.length} saved listing{favorites.length !== 1 ? 's' : ''}
+          {favorites.length} {t('anúncio')}{favorites.length !== 1 ? 's' : ''} {t('guardado')}{favorites.length !== 1 ? 's' : ''}
         </Text>
       </View>
 
@@ -122,9 +124,9 @@ export default function FavoritesScreen() {
               size={64}
               color={COLORS.textLight}
             />
-            <Text style={styles.emptyTitle}>No saved listings yet</Text>
+            <Text style={styles.emptyTitle}>{t('Sem favoritos')}</Text>
             <Text style={styles.emptySubtitle}>
-              Tap the heart icon on a listing to save it here
+              {t('Toca no coração num anúncio para guardar aqui')}
             </Text>
           </View>
         }

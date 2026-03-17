@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../../shared/types';
 import * as listingService from './listing.service';
+import * as boostService from './boost.service';
 
 export async function createListing(req: AuthRequest, res: Response, next: NextFunction) {
   try {
@@ -97,6 +98,41 @@ export async function deletePhoto(req: AuthRequest, res: Response, next: NextFun
       req.params.photoId as string,
     );
     res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ─── Boost ───────────────────────────────────────────────
+
+export async function getBoostTiers(_req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const tiers = await boostService.getBoostTiers();
+    res.json(tiers);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function createBoost(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const { tier } = req.body;
+    const result = await boostService.createBoostPayment(
+      req.userId!,
+      req.params.id as string,
+      tier,
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function confirmBoost(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const { paymentIntentId } = req.body;
+    const listing = await boostService.activateBoost(paymentIntentId);
+    res.json(listing);
   } catch (err) {
     next(err);
   }

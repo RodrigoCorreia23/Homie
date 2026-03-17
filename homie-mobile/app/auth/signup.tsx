@@ -13,8 +13,10 @@ import {
 import { router } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 import { COLORS } from '../../utils/constants';
+import { useT } from '../../utils/i18n';
 
 export default function SignupScreen() {
+  const t = useT();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,23 +50,23 @@ export default function SignupScreen() {
     setError('');
 
     if (!name.trim()) {
-      setError('Please enter your name.');
+      setError(t('Insere o teu nome.'));
       return;
     }
     if (!email.trim() || !validateEmail(email.trim())) {
-      setError('Please enter a valid email address.');
+      setError(t('Insere um e-mail válido.'));
       return;
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.');
+      setError(t('A palavra-passe deve ter pelo menos 8 caracteres.'));
       return;
     }
     if (!dateOfBirth.trim()) {
-      setError('Please enter your date of birth (YYYY-MM-DD).');
+      setError(t('Insere a tua data de nascimento (AAAA-MM-DD).'));
       return;
     }
     if (!validateAge(dateOfBirth.trim())) {
-      setError('You must be at least 18 years old.');
+      setError(t('Deves ter pelo menos 18 anos.'));
       return;
     }
 
@@ -79,7 +81,7 @@ export default function SignupScreen() {
       router.replace('/auth/onboarding');
     } catch (err: any) {
       const message =
-        err?.response?.data?.message || 'Signup failed. Please try again.';
+        err?.response?.data?.message || t('Falha no registo. Tenta novamente.');
       setError(message);
     } finally {
       setLoading(false);
@@ -97,9 +99,9 @@ export default function SignupScreen() {
       >
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.title}>{t('Criar conta')}</Text>
             <Text style={styles.subtitle}>
-              Join Homie and find your perfect match
+              {t('Junta-te ao Homie e encontra a combinação perfeita')}
             </Text>
           </View>
 
@@ -111,10 +113,10 @@ export default function SignupScreen() {
             ) : null}
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Full Name</Text>
+              <Text style={styles.label}>{t('Nome completo')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="John Doe"
+                placeholder={t("João Silva")}
                 placeholderTextColor={COLORS.textLight}
                 value={name}
                 onChangeText={setName}
@@ -123,10 +125,10 @@ export default function SignupScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>{t('E-mail')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="your@email.com"
+                placeholder={t("o-teu@email.com")}
                 placeholderTextColor={COLORS.textLight}
                 value={email}
                 onChangeText={setEmail}
@@ -137,10 +139,10 @@ export default function SignupScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={styles.label}>{t('Palavra-passe')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="At least 8 characters"
+                placeholder={t("Pelo menos 8 caracteres")}
                 placeholderTextColor={COLORS.textLight}
                 value={password}
                 onChangeText={setPassword}
@@ -149,10 +151,10 @@ export default function SignupScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Date of Birth</Text>
+              <Text style={styles.label}>{t('Data de nascimento')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="YYYY-MM-DD"
+                placeholder="AAAA-MM-DD"
                 placeholderTextColor={COLORS.textLight}
                 value={dateOfBirth}
                 onChangeText={setDateOfBirth}
@@ -161,10 +163,10 @@ export default function SignupScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>City (optional)</Text>
+              <Text style={styles.label}>{t('Cidade (opcional)')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. Lisboa"
+                placeholder={t("ex. Lisboa")}
                 placeholderTextColor={COLORS.textLight}
                 value={city}
                 onChangeText={setCity}
@@ -181,7 +183,7 @@ export default function SignupScreen() {
               {loading ? (
                 <ActivityIndicator color={COLORS.surface} />
               ) : (
-                <Text style={styles.buttonText}>Create Account</Text>
+                <Text style={styles.buttonText}>{t('Criar conta')}</Text>
               )}
             </TouchableOpacity>
 
@@ -190,8 +192,8 @@ export default function SignupScreen() {
               onPress={() => router.back()}
             >
               <Text style={styles.linkText}>
-                Already have an account?{' '}
-                <Text style={styles.linkHighlight}>Log in</Text>
+                {t('Já tens conta?')}{' '}
+                <Text style={styles.linkHighlight}>{t('Entrar')}</Text>
               </Text>
             </TouchableOpacity>
           </View>

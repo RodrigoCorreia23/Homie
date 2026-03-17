@@ -17,11 +17,14 @@ router.post('/', validateRequest(createListingSchema), listingController.createL
 router.get('/', validateQuery(listingFeedSchema), listingController.getListingFeed);
 router.get('/map', listingController.getListingsForMap);
 router.get('/mine', listingController.getMyListings);
+router.get('/boost/tiers', listingController.getBoostTiers);
 router.get('/:id', listingController.getListingById);
 router.put('/:id', validateRequest(updateListingSchema), listingController.updateListing);
 router.delete('/:id', listingController.deleteListing);
 router.patch('/:id/status', validateRequest(updateStatusSchema), listingController.updateStatus);
 router.post('/:id/photos', listingController.addPhoto);
 router.delete('/:id/photos/:photoId', listingController.deletePhoto);
+router.post('/:id/boost', listingController.createBoost);
+router.post('/:id/boost/confirm', listingController.confirmBoost);
 
 export default router;
