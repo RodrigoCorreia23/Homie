@@ -16,11 +16,11 @@ Solving the housing crisis for young people — students, remote workers, expats
 
 ### Revenue Streams
 
-| Stream | Description | When |
-|--------|-------------|------|
+| Stream | Description | Status |
+|--------|-------------|--------|
 | **Rent payments (2% commission)** | Every rent paid through the app generates 2% for Homie. Recurring, predictable revenue. | MVP |
+| **Listing boosts** | Landlords pay to feature their listings at the top of search results (€4.99/7d, €9.50/14d, €13/30d) | MVP |
 | **Freemium subscriptions** | Free tier with limits → paid tiers with premium features | Post-launch |
-| **Listing boosts** | Landlords pay to feature their listings at the top | Post-launch |
 | **Contextual ads** | Moving companies, insurance, furniture, internet providers | Growth phase |
 | **Service marketplace** | Commission on cleaning, moving, contract services | Future |
 
@@ -52,15 +52,34 @@ Solving the housing crisis for young people — students, remote workers, expats
 
 ## Key Features
 
-### 1. Property Listings
-- Landlords/tenants post rooms, apartments, or coliving spaces
-- Rich details: photos (up to 10), price, location, bedrooms, bathrooms, furnished, bills included
+### 1. Differentiated Onboarding
+- Users choose their role at signup: **Seeker** (looking for a home), **Landlord** (has a property), or **Both**
+- **Seekers** complete: gender, preferred cities (up to 5, geocoded), habits questionnaire, budget
+- **Landlords** complete: house rules (smoking policy, parties, quiet hours, overnight guests, pets, cleanliness expectation, tenant gender preference)
+- **Both** complete all steps from both flows
+- Preferred cities are geocoded to coordinates (local DB of 40+ cities + Nominatim API fallback with 3s timeout) for geo-based search
+
+### 2. Property Listings
+- Landlords post rooms, apartments, or coliving spaces
+- Rich details: photos (up to 10, uploaded via Cloudinary), price, location, bedrooms, bathrooms, furnished, bills included
 - House rules: smokers, pets, gender preference
 - Feed with filters: city, price range, type, radius, furnished, etc.
+- **Geo-based search**: default 50km radius from seeker's preferred city, sorted by distance
+- **Radius filter**: 5km, 10km, 15km, 25km, 50km — adjustable in explore
 - Map view with pins for each listing
 - Status management: active, paused, rented, expired (auto-expires after 90 days)
+- **Create listing**: 6-step form (basics → photos → location → details → rules → price)
+- **Listing management**: pause/activate/delete from listing detail screen
+- House rules pre-filled from landlord's profile defaults
 
-### 2. Compatibility Matching
+### 3. Listing Boosts (Paid Feature)
+- Landlords pay to feature their listings at the top of search results
+- **3 tiers**: 7 days (€4.99), 14 days (€9.50), 30 days (€13.00)
+- Payment via Stripe
+- Boosted listings show a "DESTAQUE" (Featured) badge and always sort to the top
+- Boost modal accessible from "My Listings" in profile
+
+### 4. Compatibility Matching
 - Both seekers and landlords fill out a **habits questionnaire**:
   - Schedule: day person vs night person
   - Smoker: yes/no
@@ -81,20 +100,35 @@ Solving the housing crisis for young people — students, remote workers, expats
 | Noise tolerance | 10% | Closer values = higher score |
 | Budget fit | 15% | Price within seeker's range = full score |
 
-### 3. Interest System
+### 5. Seeker Discovery (for Landlords)
+- Landlords see **seeker profiles** instead of listings in the Explore tab
+- Seekers shown based on proximity to the landlord's listing locations
+- **Listing selector**: landlord picks which listing to search around (chips with listing titles)
+- Seeker cards show: photo, name, gender, preferred city, distance, habits tags (schedule, smoker, pets, cleanliness, noise, budget)
+- Tap on a seeker card → opens their **public profile** with full details
+- Users with role **BOTH** get a toggle to switch between "Casas" (listings) and "Inquilinos" (seekers)
+
+### 6. Interest System
 - Seekers send an **interest request** on a listing (with optional intro message)
 - Landlord sees received interests and can **accept** or **reject**
 - Accepting creates a private **conversation** between the two
 - Prevents spam — you can't message without mutual interest
 
-### 4. Real-time Chat
+### 7. Real-time Chat
 - Powered by **Socket.io** for instant messaging
 - Typing indicators (user is typing...)
 - Read receipts (messages marked as read)
 - Cursor-based pagination for message history
 - Only available after interest is accepted
 
-### 5. In-App Rent Payments
+### 8. Photo Upload (Cloudinary)
+- Profile photos (up to 6) and listing photos (up to 10)
+- **expo-image-picker** for camera and gallery access
+- Images compressed (quality 0.7, 4:3 aspect) and uploaded as base64 to Cloudinary
+- **PhotoGrid** reusable component with add/remove, main photo badge
+- Cloudinary unsigned upload preset (`homie_unsigned`)
+
+### 9. In-App Rent Payments
 - Powered by **Stripe Connect** (marketplace model)
 - Landlord onboards as a Stripe Express connected account
 - Tenant pays rent through the app monthly
@@ -104,17 +138,24 @@ Solving the housing crisis for young people — students, remote workers, expats
 - Automatic rent reminders (3 days before due date)
 - Overdue payment detection and notifications
 
-### 6. Favorites
+### 10. Favorites
 - Save listings to review later
 - Quick access to saved listings with key info
 
-### 7. Notifications
+### 11. Notifications
 - New interest on your listing
 - Interest accepted (chat unlocked)
 - New message
 - Rent due / overdue
 - Payment received / confirmed
 - Real-time via Socket.io + persistent in-app notifications
+
+### 12. Multi-Language Support (PT/EN)
+- Full i18n system with ~200+ translated strings
+- Toggle in **Profile > Settings > Language** (PT ↔ EN)
+- Language preference persisted in SecureStore
+- All screens support both languages
+- Portuguese is the default, English available via toggle
 
 ---
 
@@ -129,11 +170,14 @@ Solving the housing crisis for young people — students, remote workers, expats
 | **Auth** | JWT (access + refresh tokens) + bcrypt |
 | **Validation** | Zod |
 | **Payments** | Stripe Connect (Express accounts) |
+| **Image Storage** | Cloudinary (unsigned uploads) |
+| **Geocoding** | Local city DB (40+ cities) + Nominatim API fallback |
 | **Cron Jobs** | node-cron |
 | **Frontend** | React Native + Expo SDK 55 (TypeScript) |
 | **Navigation** | Expo Router (file-based) |
 | **State** | Zustand |
 | **API Client** | Axios with JWT interceptors + auto refresh |
+| **Image Picker** | expo-image-picker |
 | **Hosting** | Render (backend + DB) |
 
 ---
@@ -153,25 +197,29 @@ Homie/
 │   │   │   └── stripe.ts              # Stripe client
 │   │   ├── modules/
 │   │   │   ├── auth/                   # Signup, login, JWT refresh, logout
-│   │   │   ├── user/                   # Profile CRUD, photos, habits
-│   │   │   ├── listing/               # Listings CRUD, feed, map, filters
+│   │   │   ├── user/                   # Profile CRUD, photos, habits, seekers discovery
+│   │   │   ├── listing/               # Listings CRUD, feed, map, filters, boosts
 │   │   │   ├── compatibility/         # Score calculation engine
 │   │   │   ├── interest/              # Like system, accept/reject
 │   │   │   ├── chat/                  # Messages, read receipts
 │   │   │   ├── favorite/             # Save/unsave listings
 │   │   │   ├── notification/         # In-app notifications
-│   │   │   └── payment/              # Stripe Connect, tenancies, rent
+│   │   │   ├── payment/              # Stripe Connect, tenancies, rent
+│   │   │   └── upload/               # Cloudinary image uploads
 │   │   ├── shared/
 │   │   │   ├── middleware/            # Error handler, validation, auth
 │   │   │   ├── types/                # Shared TypeScript interfaces
-│   │   │   └── utils/                # Geo (Haversine), scoring algorithm
+│   │   │   └── utils/
+│   │   │       ├── geo.ts            # Haversine distance, bounding box
+│   │   │       ├── scoring.ts        # Compatibility algorithm
+│   │   │       └── geocoding.ts      # City → coordinates resolver
 │   │   └── jobs/
 │   │       ├── scheduler.ts           # Cron job orchestrator
 │   │       ├── rentReminder.job.ts    # Monthly rent reminders
 │   │       ├── overdueRent.job.ts     # Flag overdue payments
 │   │       └── listingExpiry.job.ts   # Expire 90-day listings
 │   ├── prisma/
-│   │   ├── schema.prisma              # Database schema (12 models)
+│   │   ├── schema.prisma              # Database schema (14 models)
 │   │   ├── migrations/                # SQL migration files
 │   │   └── seed.ts                    # Seed data (6 users, 5 listings)
 │   ├── test-api.js                    # Quick API test script
@@ -181,41 +229,49 @@ Homie/
 │
 ├── homie-mobile/                       # Frontend (React Native + Expo SDK 55)
 │   ├── app/
-│   │   ├── _layout.tsx                 # Root layout (auth check)
+│   │   ├── _layout.tsx                 # Root layout (auth check, language load)
 │   │   ├── index.tsx                   # Entry redirect
 │   │   ├── auth/
 │   │   │   ├── login.tsx               # Login screen
 │   │   │   ├── signup.tsx              # Registration screen
-│   │   │   └── onboarding.tsx          # 4-step habits questionnaire
+│   │   │   └── onboarding.tsx          # Differentiated onboarding (seeker/landlord/both)
 │   │   ├── (tabs)/
 │   │   │   ├── _layout.tsx             # Tab navigator (5 tabs)
-│   │   │   ├── explore.tsx             # Listing feed + filters + compatibility %
+│   │   │   ├── explore.tsx             # Role-based: listings (seeker) or seekers (landlord)
 │   │   │   ├── map.tsx                 # Map view with listing pins
 │   │   │   ├── favorites.tsx           # Saved listings
 │   │   │   ├── messages.tsx            # Conversation list
-│   │   │   ├── profile.tsx             # User profile + settings
+│   │   │   ├── profile.tsx             # Profile, photos, listings, settings, language toggle
 │   │   │   └── chat/
 │   │   │       └── [id].tsx            # Real-time chat screen
-│   │   └── listing/
-│   │       └── [id].tsx                # Listing detail + send interest
+│   │   ├── listing/
+│   │   │   ├── [id].tsx                # Listing detail + owner actions (pause/delete)
+│   │   │   └── create.tsx              # Create listing (6-step form with photos)
+│   │   └── user/
+│   │       └── [id].tsx                # Seeker public profile
+│   ├── components/
+│   │   └── PhotoGrid.tsx               # Reusable photo upload grid
 │   ├── services/
 │   │   ├── api.ts                      # Axios instance + JWT interceptors
 │   │   ├── auth.service.ts             # Auth API calls
-│   │   ├── user.service.ts             # User/profile API calls
-│   │   ├── listing.service.ts          # Listings API calls
+│   │   ├── user.service.ts             # User/profile/seekers API calls
+│   │   ├── listing.service.ts          # Listings + boosts API calls
 │   │   ├── interest.service.ts         # Interest API calls
 │   │   ├── chat.service.ts             # Chat API calls
 │   │   ├── favorite.service.ts         # Favorites API calls
 │   │   ├── notification.service.ts     # Notification API calls
+│   │   ├── upload.service.ts           # Cloudinary upload
 │   │   └── socket.ts                   # Socket.io client singleton
 │   ├── store/
 │   │   ├── authStore.ts                # Auth state (Zustand)
 │   │   ├── listingStore.ts             # Listings + favorites state
-│   │   └── chatStore.ts                # Chat + conversations state
+│   │   ├── chatStore.ts                # Chat + conversations state
+│   │   └── languageStore.ts            # Language preference (PT/EN)
 │   ├── types/
 │   │   └── index.ts                    # All TypeScript interfaces
 │   ├── utils/
-│   │   └── constants.ts                # Colors, API URL
+│   │   ├── constants.ts                # Colors, API URL
+│   │   └── i18n.ts                     # Translation system (PT→EN map + useT hook)
 │   └── app.json                        # Expo configuration
 │
 └── HOMIE_DOCUMENTATION.md              # This file
@@ -225,14 +281,15 @@ Homie/
 
 ## Database Schema
 
-### 12 Models
+### 14 Models
 
 | Model | Description |
 |-------|-------------|
-| `User` | Accounts, preferences, role (SEEKER/LANDLORD/BOTH), Stripe IDs |
+| `User` | Accounts, role (SEEKER/LANDLORD/BOTH), gender, preferred cities + coordinates, Stripe IDs |
 | `UserPhoto` | Profile photos (max 6, ordered by position) |
-| `Habits` | Questionnaire: schedule, smoker, pets, cleanliness, noise, visitors, budget |
-| `Listing` | Property ads: photos, location, price, type, rules, status |
+| `Habits` | Seeker questionnaire: schedule, smoker, pets, cleanliness, noise, visitors, budget |
+| `HouseRules` | Landlord defaults: smoking/pets/parties/guests policy, quiet hours, cleanliness expectation |
+| `Listing` | Property ads: photos, location, price, type, rules, status, boost |
 | `ListingPhoto` | Listing photos (max 10, ordered by position) |
 | `Interest` | Like/request on a listing (PENDING/ACCEPTED/REJECTED) |
 | `Conversation` | Chat between interested user and listing owner |
@@ -243,11 +300,27 @@ Homie/
 | `Tenancy` | Rental agreement (tenant + landlord + listing + rent amount) |
 | `Payment` | Rent payments with Stripe references, commission, receipts |
 
+### Key Enums
+
+| Enum | Values |
+|------|--------|
+| `UserRole` | SEEKER, LANDLORD, BOTH |
+| `UserGender` | MALE, FEMALE, OTHER |
+| `Schedule` | DAY, NIGHT |
+| `SmokingPolicy` | NOT_ALLOWED, OUTSIDE_ONLY, ALLOWED |
+| `PetsPolicy` | NOT_ALLOWED, SMALL_ONLY, ALLOWED |
+| `PartiesPolicy` | NOT_ALLOWED, OCCASIONAL, ALLOWED |
+| `OvernightGuestsPolicy` | NOT_ALLOWED, WITH_NOTICE, ALLOWED |
+| `ListingType` | ROOM, APARTMENT, COLIVING |
+| `ListingStatus` | ACTIVE, PAUSED, RENTED, EXPIRED |
+| `Gender` | MALE, FEMALE, ANY |
+
 ### Key Relationships
 
 ```
 User 1──N UserPhoto
 User 1──1 Habits
+User 1──1 HouseRules
 User 1──N Listing (as owner)
 User 1──N Interest (as sender)
 User N──N Conversation (via ConversationMember)
@@ -288,35 +361,53 @@ Tenancy 1──N Payment
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/me` | Get own profile + photos + habits |
-| PUT | `/me` | Update profile (name, bio, city, role) |
+| GET | `/me` | Get own profile + photos + habits + houseRules |
+| PUT | `/me` | Update profile (name, bio, city, role, gender) |
+| POST | `/me/onboarding` | Complete onboarding (role, gender, cities, habits, houseRules) |
 | PUT | `/me/habits` | Create/update habits questionnaire |
 | POST | `/me/photos` | Add photo (max 6) |
 | DELETE | `/me/photos/:photoId` | Remove photo |
+| PUT | `/me/push-token` | Update Expo push token |
+| GET | `/seekers` | Discover seekers by location (for landlords) |
 | GET | `/:id` | View another user's public profile |
+
+**Seekers query parameters:**
+```
+?city=Porto&lat=41.15&lng=-8.63&radius=50&page=1&limit=20
+```
 
 ### Listings (`/api/listings`)
 
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | `/` | Create listing |
-| GET | `/` | Feed with filters + compatibility % |
+| GET | `/` | Feed with filters + compatibility % + distance |
 | GET | `/map` | Listings within bounding box |
 | GET | `/mine` | My listings (as owner) |
+| GET | `/boost/tiers` | Get boost pricing tiers |
 | GET | `/:id` | Listing detail + compatibility |
 | PUT | `/:id` | Update listing |
 | DELETE | `/:id` | Delete listing |
 | PATCH | `/:id/status` | Change status (ACTIVE/PAUSED/RENTED) |
 | POST | `/:id/photos` | Add listing photo |
 | DELETE | `/:id/photos/:photoId` | Remove listing photo |
+| POST | `/:id/boost` | Create boost payment (Stripe) |
+| POST | `/:id/boost/confirm` | Confirm boost after payment |
 
 **Feed query parameters:**
 ```
-?page=1&limit=20&city=Lisboa&type=ROOM,APARTMENT
+?page=1&limit=20&city=Porto&type=ROOM,APARTMENT
 &minPrice=30000&maxPrice=80000&furnished=true
-&lat=38.72&lng=-9.14&radius=10
+&radius=25
 &sortBy=price|compatibility|date|distance
 ```
+Note: When seeker has preferred coordinates, feed automatically uses geo search (bounding box + haversine). Boosted listings always sort to top.
+
+### Upload (`/api/upload`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/` | Upload image to Cloudinary (base64) |
 
 ### Interests (`/api/interests`)
 
@@ -413,7 +504,9 @@ Tenancy 1──N Payment
 
 ---
 
-## Stripe Connect Payment Flow
+## Stripe Payment Flows
+
+### Rent Payment (Connect)
 
 ```
 1. LANDLORD ONBOARDING
@@ -435,6 +528,23 @@ Tenancy 1──N Payment
    → Payment status → COMPLETED
    → Receipt URL stored
    → Both parties notified
+```
+
+### Listing Boost
+
+```
+1. LANDLORD SELECTS TIER
+   → GET /api/listings/boost/tiers (7d=€4.99, 14d=€9.50, 30d=€13)
+
+2. CREATE PAYMENT
+   → POST /api/listings/:id/boost { tier: "7" | "14" | "30" }
+   → Creates Stripe PaymentIntent
+   → Returns clientSecret
+
+3. CONFIRM & ACTIVATE
+   → POST /api/listings/:id/boost/confirm { paymentIntentId }
+   → Sets listing.boostedUntil = now + days
+   → Listing appears at top of search results
 ```
 
 ---
@@ -479,8 +589,11 @@ The seed (`prisma/seed.ts`) creates:
 - Sensitive fields (`passwordHash`, `refreshToken`) never exposed in API responses
 - Input validation on all endpoints via **Zod schemas**
 - Auth middleware protects all routes except signup/login/refresh
+- Coordinate validation on seekers endpoint (lat -90/90, lng -180/180, radius 1-200km)
 - Stripe webhook signature verification
 - CORS + Helmet security headers
+- Cloudinary unsigned upload preset (server-side validated)
+- Nominatim geocoding with 3s timeout (non-blocking)
 
 ---
 
@@ -489,6 +602,7 @@ The seed (`prisma/seed.ts`) creates:
 ### Prerequisites
 - Node.js v18+
 - Docker Desktop (for PostgreSQL) or PostgreSQL installed locally
+- Cloudinary account (free tier)
 
 ### 1. Backend Setup
 
@@ -503,7 +617,7 @@ npm install
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your values
+# Edit .env with your values (JWT secrets, Stripe keys, Cloudinary keys)
 
 # Run migrations
 npx prisma migrate dev --name init
@@ -516,7 +630,14 @@ npm run dev
 # → API running at http://localhost:3001
 ```
 
-### 2. Frontend Setup
+### 2. Cloudinary Setup
+
+1. Create free account at cloudinary.com
+2. Go to **Settings > Upload > Upload presets > Add upload preset**
+3. Name: `homie_unsigned`, Signing Mode: **Unsigned**, Save
+4. Copy Cloud Name, API Key, API Secret to `.env`
+
+### 3. Frontend Setup
 
 ```bash
 cd homie-mobile
@@ -575,14 +696,16 @@ curl.exe http://localhost:3001/api/health
 |--------|-------|-------------|
 | Login | `/auth/login` | Email + password login |
 | Signup | `/auth/signup` | Registration with name, email, password, DOB |
-| Onboarding | `/auth/onboarding` | 4-step habits questionnaire (schedule, lifestyle, preferences, budget) |
-| Explore | `/(tabs)/explore` | Listing feed with filters, type chips, compatibility % |
+| Onboarding | `/auth/onboarding` | Differentiated flow: seeker (gender, cities, habits, budget) / landlord (house rules) |
+| Explore | `/(tabs)/explore` | Seeker: listing feed with geo search + radius. Landlord: seeker discovery with listing selector |
 | Map | `/(tabs)/map` | Map view with listing pins and bottom sheet preview |
 | Favorites | `/(tabs)/favorites` | Saved listings with remove option |
 | Messages | `/(tabs)/messages` | Conversations list with last message preview |
 | Chat | `/(tabs)/chat/[id]` | Real-time messaging with typing indicators |
-| Profile | `/(tabs)/profile` | User profile, habits summary, logout |
-| Listing Detail | `/listing/[id]` | Full listing with photos, details, send interest modal |
+| Profile | `/(tabs)/profile` | Photos, habits, my listings (create/boost), settings, language toggle |
+| Listing Detail | `/listing/[id]` | Full listing with photos, details. Owner: pause/delete. Visitor: send interest |
+| Create Listing | `/listing/create` | 6-step form: basics → photos → location → details → rules → price |
+| Seeker Profile | `/user/[id]` | Public profile with photos, habits, tags |
 
 ---
 
@@ -598,6 +721,9 @@ curl.exe http://localhost:3001/api/health
 | `JWT_REFRESH_EXPIRES_IN` | Refresh token expiry | `7d` |
 | `STRIPE_SECRET_KEY` | Stripe secret key | `sk_test_xxx` |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret | `whsec_xxx` |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | `dkcpob8cl` |
+| `CLOUDINARY_API_KEY` | Cloudinary API key | `181727627126484` |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret | `LzHaOZjp...` |
 | `FRONTEND_URL` | Frontend URL (for CORS) | `http://localhost:3000` |
 | `NODE_ENV` | Environment | `development` |
 
@@ -616,21 +742,21 @@ The `render.yaml` configures:
 ## Future Ideas
 
 ### Short-term (Post-MVP)
-- [ ] Photo upload to cloud storage (AWS S3 / Cloudinary)
 - [ ] Premium subscriptions (Homie Plus / Homie Pro)
-- [ ] Listing boost (pay to feature)
 - [ ] Profile verification (ID check)
 - [ ] Report/block user
-- [ ] Push notifications (Expo / Firebase)
+- [ ] Push notifications (Expo / Firebase) — basic setup exists
 - [ ] Reviews and ratings after tenancy ends
+- [ ] Edit listing form (reuse create listing steps)
+- [ ] Automatic rent collection (recurring Stripe payments)
 
 ### Medium-term
 - [ ] AI-powered listing recommendations
 - [ ] Virtual tours (video uploads)
 - [ ] Digital rental contracts (e-signature)
-- [ ] Automatic rent collection (recurring Stripe payments)
 - [ ] Landlord dashboard with analytics
-- [ ] Multi-language support (PT, EN, ES, FR)
+- [ ] Additional languages (ES, FR, DE)
+- [ ] Migrate to AWS S3 when Cloudinary costs justify (>10K users)
 
 ### Long-term
 - [ ] Insurance marketplace integration
@@ -666,7 +792,7 @@ The `render.yaml` configures:
 
 | vs | Homie advantage |
 |----|-----------------|
-| **OLX / Idealista** | Compatibility matching, in-app payments, chat, no spam |
-| **Facebook Groups** | Structured listings, verified users, payment receipts |
-| **Uniplaces / HousingAnywhere** | Lower commission (2% vs 10%+), roommate matching |
-| **Badi** | Payment integration, broader market (not just rooms) |
+| **OLX / Idealista** | Compatibility matching, in-app payments, chat, no spam, geo search |
+| **Facebook Groups** | Structured listings, verified users, payment receipts, house rules |
+| **Uniplaces / HousingAnywhere** | Lower commission (2% vs 10%+), roommate matching, listing boosts |
+| **Badi** | Payment integration, broader market (not just rooms), PT/EN support |
