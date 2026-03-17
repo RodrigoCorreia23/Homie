@@ -16,6 +16,7 @@ import { useChatStore } from '../../../store/chatStore';
 import { useAuthStore } from '../../../store/authStore';
 import { getSocket } from '../../../services/socket';
 import { COLORS } from '../../../utils/constants';
+import { useT } from '../../../utils/i18n';
 import type { Message } from '../../../types';
 
 export default function ChatScreen() {
@@ -23,6 +24,7 @@ export default function ChatScreen() {
   const { activeMessages, isLoading, fetchMessages, sendMessage, markAsRead } =
     useChatStore();
   const { user } = useAuthStore();
+  const t = useT();
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
@@ -114,7 +116,7 @@ export default function ChatScreen() {
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleTimeString('en-GB', {
+    return date.toLocaleTimeString('pt-PT', {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -162,8 +164,8 @@ export default function ChatScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: 'Chat',
-          headerBackTitle: 'Back',
+          headerTitle: t('Chat'),
+          headerBackTitle: t('Voltar'),
           headerTintColor: COLORS.primary,
           headerStyle: { backgroundColor: COLORS.surface },
           headerTitleStyle: { color: COLORS.text, fontWeight: '600' },
@@ -190,14 +192,14 @@ export default function ChatScreen() {
             ListHeaderComponent={
               otherUserTyping ? (
                 <View style={styles.typingIndicator}>
-                  <Text style={styles.typingText}>typing...</Text>
+                  <Text style={styles.typingText}>{t('a escrever...')}</Text>
                 </View>
               ) : null
             }
             ListEmptyComponent={
               <View style={styles.emptyChat}>
                 <Text style={styles.emptyChatText}>
-                  Start the conversation!
+                  {t('Começa a conversa!')}
                 </Text>
               </View>
             }
@@ -207,7 +209,7 @@ export default function ChatScreen() {
         <View style={styles.inputBar}>
           <TextInput
             style={styles.textInput}
-            placeholder="Type a message..."
+            placeholder={t('Escreve uma mensagem...')}
             placeholderTextColor={COLORS.textLight}
             value={inputText}
             onChangeText={handleTextChange}

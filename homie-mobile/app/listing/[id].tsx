@@ -430,6 +430,14 @@ export default function ListingDetailScreen() {
         {isOwner ? (
           <View style={styles.ownerActions}>
             <TouchableOpacity
+              style={[styles.ownerBtn, styles.ownerBtnEdit]}
+              onPress={() => router.push(`/listing/edit?id=${id}` as any)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="create-outline" size={20} color={COLORS.primary} />
+              <Text style={[styles.ownerBtnText, { color: COLORS.primary }]}>{t('Editar')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[styles.ownerBtn, styles.ownerBtnPause]}
               onPress={handleToggleStatus}
               activeOpacity={0.7}
@@ -795,6 +803,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1.5,
+  },
+  ownerBtnEdit: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
   },
   ownerBtnPause: {
     borderColor: '#FDE68A',

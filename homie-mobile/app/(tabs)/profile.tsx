@@ -160,8 +160,30 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      {/* Quick actions */}
+      <View style={styles.quickActionsRow}>
+        {(user?.role === 'LANDLORD' || user?.role === 'BOTH') && (
+          <TouchableOpacity
+            style={styles.quickActionBtn}
+            onPress={() => router.push('/interests' as any)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="hand-right-outline" size={22} color={COLORS.primary} />
+            <Text style={styles.quickActionText}>{t('Interesses')}</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          style={styles.quickActionBtn}
+          onPress={() => router.push('/notifications' as any)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="notifications-outline" size={22} color={COLORS.primary} />
+          <Text style={styles.quickActionText}>{t('Notificações')}</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>As minhas fotos</Text>
+        <Text style={styles.sectionTitle}>{t('As minhas fotos')}</Text>
         <PhotoGrid
           photos={(user?.photos || []).map((p) => ({ id: p.id, url: p.url, position: p.position }))}
           maxPhotos={6}
@@ -444,6 +466,29 @@ const styles = StyleSheet.create({
     color: COLORS.surface,
     fontSize: 12,
     fontWeight: '700',
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 20,
+    marginTop: 16,
+  },
+  quickActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: COLORS.surface,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  quickActionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text,
   },
   section: {
     paddingHorizontal: 20,

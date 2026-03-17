@@ -1,4 +1,4 @@
-import { PrismaClient, Schedule, ListingType, Gender } from '@prisma/client';
+import { PrismaClient, Schedule, ListingType, Gender, SmokingPolicy, PetsPolicy, PartiesPolicy, OvernightGuestsPolicy } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -19,6 +19,11 @@ async function main() {
         bio: 'Estudante de design, adoro cozinhar e fazer yoga. Procuro quarto em Lisboa perto do metro.',
         city: 'Lisboa',
         role: 'SEEKER',
+        gender: 'FEMALE',
+        preferredCity: 'Lisboa',
+        preferredCities: ['Lisboa'],
+        preferredLatitude: 38.7223,
+        preferredLongitude: -9.1393,
         photos: {
           create: [
             { url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400', position: 0 },
@@ -47,6 +52,11 @@ async function main() {
         bio: 'Programador remoto. Tranquilo, organizado. Tenho um T2 em Arroios com quarto livre.',
         city: 'Lisboa',
         role: 'BOTH',
+        gender: 'MALE',
+        preferredCity: 'Lisboa',
+        preferredCities: ['Lisboa'],
+        preferredLatitude: 38.7223,
+        preferredLongitude: -9.1393,
         photos: {
           create: [
             { url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400', position: 0 },
@@ -75,6 +85,11 @@ async function main() {
         bio: 'Enfermeira, horários rotativos. Gosto de animais e de manter a casa limpa.',
         city: 'Porto',
         role: 'SEEKER',
+        gender: 'FEMALE',
+        preferredCity: 'Porto',
+        preferredCities: ['Porto'],
+        preferredLatitude: 41.1579,
+        preferredLongitude: -8.6291,
         photos: {
           create: [
             { url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400', position: 0 },
@@ -103,6 +118,7 @@ async function main() {
         bio: 'Músico e bartender. Noturno por natureza. Tenho apartamento no Bairro Alto com quartos livres.',
         city: 'Lisboa',
         role: 'LANDLORD',
+        gender: 'MALE',
         photos: {
           create: [
             { url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400', position: 0 },
@@ -120,6 +136,18 @@ async function main() {
             budgetMax: 100000,
           },
         },
+        houseRules: {
+          create: {
+            smokingPolicy: 'OUTSIDE_ONLY',
+            petsPolicy: 'NOT_ALLOWED',
+            partiesPolicy: 'OCCASIONAL',
+            overnightGuests: 'ALLOWED',
+            quietHoursStart: '02:00',
+            quietHoursEnd: '10:00',
+            cleanlinessLevel: 3,
+            preferredGender: 'ANY',
+          },
+        },
       },
     }),
     prisma.user.create({
@@ -131,6 +159,11 @@ async function main() {
         bio: 'Estudante Erasmus de Barcelona. Procuro quarto para 6 meses no Porto.',
         city: 'Porto',
         role: 'SEEKER',
+        gender: 'FEMALE',
+        preferredCity: 'Porto',
+        preferredCities: ['Porto'],
+        preferredLatitude: 41.1579,
+        preferredLongitude: -8.6291,
         photos: {
           create: [
             { url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400', position: 0 },
@@ -159,6 +192,7 @@ async function main() {
         bio: 'Investidor imobiliário. Tenho vários apartamentos no Porto e Lisboa.',
         city: 'Porto',
         role: 'LANDLORD',
+        gender: 'MALE',
         photos: {
           create: [
             { url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400', position: 0 },
@@ -174,6 +208,18 @@ async function main() {
             visitors: 3,
             budgetMin: 0,
             budgetMax: 200000,
+          },
+        },
+        houseRules: {
+          create: {
+            smokingPolicy: 'NOT_ALLOWED',
+            petsPolicy: 'SMALL_ONLY',
+            partiesPolicy: 'NOT_ALLOWED',
+            overnightGuests: 'WITH_NOTICE',
+            quietHoursStart: '23:00',
+            quietHoursEnd: '08:00',
+            cleanlinessLevel: 4,
+            preferredGender: 'ANY',
           },
         },
       },

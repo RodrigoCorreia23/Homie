@@ -161,7 +161,11 @@ const EN: Record<string, string> = {
   'Sem favoritos': 'No favorites yet',
   'Toca no coração num anúncio para guardar aqui': 'Tap the heart on a listing to save it here',
 
-  // ─── Messages ──────────────────────────────────────────
+  // ─── Messages / Chat ───────────────────────────────────
+  'Chat': 'Chat',
+  'a escrever...': 'typing...',
+  'Começa a conversa!': 'Start the conversation!',
+  'Escreve uma mensagem...': 'Type a message...',
   'Agora': 'Now',
   'Utilizador': 'User',
   'Ainda sem mensagens': 'No messages yet',
@@ -266,6 +270,36 @@ const EN: Record<string, string> = {
   // ─── User Profile ──────────────────────────────────────
   'Perfil não encontrado': 'Profile not found',
   'Sobre': 'About',
+
+  // ─── Interests ─────────────────────────────────────────
+  'Interesses recebidos': 'Received Interests',
+  'Aceitar interesse': 'Accept interest',
+  'Ao aceitar, uma conversa será criada entre vocês.': 'By accepting, a conversation will be created between you.',
+  'Aceitar': 'Accept',
+  'Rejeitar interesse': 'Reject interest',
+  'Tens a certeza que queres rejeitar?': 'Are you sure you want to reject?',
+  'Rejeitar': 'Reject',
+  'Aceite': 'Accepted',
+  'Rejeitado': 'Rejected',
+  'Erro': 'Error',
+  'Não foi possível aceitar.': 'Could not accept.',
+  'Não foi possível rejeitar.': 'Could not reject.',
+  'interesse pendente': 'pending interest',
+  'interesses pendentes': 'pending interests',
+  'Sem interesses': 'No interests',
+  'Quando alguém mostrar interesse nos teus anúncios, aparece aqui.': 'When someone shows interest in your listings, it will appear here.',
+  'Interesses': 'Interests',
+
+  // ─── Notifications ────────────────────────────────────
+  'Notificações': 'Notifications',
+  'Marcar tudo': 'Mark all read',
+  'Sem notificações': 'No notifications',
+
+  // ─── Edit Listing ─────────────────────────────────────
+  'Editar anúncio': 'Edit Listing',
+  'Guardar': 'Save',
+  'Erro ao guardar anúncio.': 'Failed to save listing.',
+  'Editar': 'Edit',
 };
 
 /**
