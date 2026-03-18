@@ -167,7 +167,7 @@ export default function OnboardingScreen() {
       }
 
       await userService.completeOnboarding(payload);
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/explore');
     } catch (err: any) {
       const message =
         err?.response?.data?.message || t('Erro ao guardar preferências.');
