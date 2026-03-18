@@ -15,6 +15,7 @@ CREATE TYPE "OvernightGuestsPolicy" AS ENUM ('NOT_ALLOWED', 'WITH_NOTICE', 'ALLO
 
 -- AlterTable
 ALTER TABLE "users" ADD COLUMN "gender" "UserGender";
+ALTER TABLE "users" ADD COLUMN "preferredCity" TEXT;
 ALTER TABLE "users" ADD COLUMN "preferredCities" TEXT[] DEFAULT ARRAY[]::TEXT[];
 ALTER TABLE "users" ADD COLUMN "preferredLatitude" DOUBLE PRECISION;
 ALTER TABLE "users" ADD COLUMN "preferredLongitude" DOUBLE PRECISION;
