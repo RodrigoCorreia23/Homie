@@ -115,18 +115,24 @@ export default function CreateListingScreen() {
     setError('');
 
     try {
-      // Geocode city for coordinates
-      const geocodeRes = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', ' + city)}&format=json&limit=1`,
-        { headers: { 'User-Agent': 'Homie-App/1.0' } }
-      );
-      const geocodeData = await geocodeRes.json() as Array<{ lat: string; lon: string }>;
-
+      // Geocode city for coordinates (with timeout fallback)
       let lat = 0;
       let lng = 0;
-      if (geocodeData.length > 0) {
-        lat = parseFloat(geocodeData[0].lat);
-        lng = parseFloat(geocodeData[0].lon);
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const geocodeRes = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', ' + city)}&format=json&limit=1`,
+          { headers: { 'User-Agent': 'Homie-App/1.0' }, signal: controller.signal }
+        );
+        clearTimeout(timeout);
+        const geocodeData = await geocodeRes.json() as Array<{ lat: string; lon: string }>;
+        if (geocodeData.length > 0) {
+          lat = parseFloat(geocodeData[0].lat);
+          lng = parseFloat(geocodeData[0].lon);
+        }
+      } catch {
+        // Geocoding failed, use 0,0 — backend will still accept it
       }
 
       const priceCents = Math.round(parseFloat(price) * 100);
@@ -144,7 +150,7 @@ export default function CreateListingScreen() {
         bathrooms: parseInt(bathrooms),
         furnished,
         billsIncluded,
-        availableFrom: new Date(availableFrom).toISOString(),
+        availableFrom: new Date(availableFrom || new Date().toISOString().split('T')[0]).toISOString(),
         smokersAllowed,
         petsAllowed,
         preferredGender: preferredGender !== 'ANY' ? preferredGender : undefined,

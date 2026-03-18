@@ -4,7 +4,8 @@ import { Notification } from '../types';
 export const notificationService = {
   getNotifications: async (): Promise<Notification[]> => {
     const response = await api.get('/api/notifications');
-    return response.data;
+    // Backend returns { notifications, pagination }
+    return response.data.notifications || response.data;
   },
 
   markAsRead: async (id: string): Promise<void> => {

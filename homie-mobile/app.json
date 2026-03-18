@@ -38,7 +38,13 @@
       "expo-updates",
       "expo-secure-store",
       "expo-location",
-      "expo-image-picker"
+      "expo-image-picker",
+      [
+        "react-native-maps",
+        {
+          "androidApiKey": ""
+        }
+      ]
     ],
     "extra": {
       "router": {},
