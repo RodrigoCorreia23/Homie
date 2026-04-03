@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git fetch:*)",
+      "Bash(git stash:*)",
+      "Bash(git pull:*)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://homie-ul1n.onrender.com/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://homie-api.onrender.com/)",
+      "Bash(curl -s https://homie-ul1n.onrender.com/api/health)",
+      "Bash(curl -s https://homie-ul1n.onrender.com/)"
+    ]
+  }
+}
