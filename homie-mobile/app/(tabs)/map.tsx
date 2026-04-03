@@ -55,60 +55,60 @@ export default function MapScreen() {
       return (
         <View style={styles.webPlaceholder}>
           <Ionicons name="map-outline" size={64} color={COLORS.textLight} />
-          <Text style={styles.webPlaceholderTitle}>Mapa</Text>
+          <Text style={styles.webPlaceholderTitle}>Map View</Text>
           <Text style={styles.webPlaceholderText}>
-            Mapa disponível na app móvel.
+            Map is available on mobile devices.
           </Text>
           <Text style={styles.webPlaceholderText}>
-            {listings.length} anúncios nesta zona.
+            {listings.length} listings in this area.
           </Text>
         </View>
       );
     }
 
     // Native map using react-native-maps
+    let MapView: any;
+    let Marker: any;
     try {
       const Maps = require('react-native-maps');
-      const MapView = Maps.default;
-      const Marker = Maps.Marker;
-
-      if (!MapView) throw new Error('MapView not found');
-
-      return (
-        <MapView
-          ref={mapRef}
-          style={styles.map}
-          initialRegion={{
-            latitude: DEFAULT_LAT,
-            longitude: DEFAULT_LNG,
-            latitudeDelta: 0.1,
-            longitudeDelta: 0.1,
-          }}
-          onPress={() => setSelectedListing(null)}
-        >
-          {listings.map((listing) => (
-            <Marker
-              key={listing.id}
-              coordinate={{
-                latitude: listing.latitude,
-                longitude: listing.longitude,
-              }}
-              onPress={() => setSelectedListing(listing)}
-            />
-          ))}
-        </MapView>
-      );
+      MapView = Maps.default;
+      Marker = Maps.Marker;
     } catch {
       return (
         <View style={styles.webPlaceholder}>
           <Ionicons name="map-outline" size={64} color={COLORS.textLight} />
-          <Text style={styles.webPlaceholderTitle}>Mapa indisponível</Text>
+          <Text style={styles.webPlaceholderTitle}>Map Unavailable</Text>
           <Text style={styles.webPlaceholderText}>
-            {listings.length} anúncios encontrados. Usa o separador Explorar para os ver.
+            react-native-maps is not configured.
           </Text>
         </View>
       );
     }
+
+    return (
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        initialRegion={{
+          latitude: DEFAULT_LAT,
+          longitude: DEFAULT_LNG,
+          latitudeDelta: 0.1,
+          longitudeDelta: 0.1,
+        }}
+        onPress={() => setSelectedListing(null)}
+      >
+        {listings.map((listing) => (
+          <Marker
+            key={listing.id}
+            coordinate={{
+              latitude: listing.latitude,
+              longitude: listing.longitude,
+            }}
+            onPress={() => setSelectedListing(listing)}
+          />
+        ))}
+      </MapView>
+    );
   };
 
   return (

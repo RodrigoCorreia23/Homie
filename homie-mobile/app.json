@@ -23,11 +23,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.homie.app",
-      "permissions": [
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
-      ]
+      "package": "com.homie.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -35,28 +31,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-updates",
       "expo-secure-store",
-      "expo-location",
-      "expo-image-picker",
-      [
-        "react-native-maps",
-        {
-          "androidApiKey": ""
-        }
-      ]
-    ],
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "1de08d30-8cc5-458b-9d79-7eebefb0c8fb"
-      }
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/1de08d30-8cc5-458b-9d79-7eebefb0c8fb"
-    }
+      "expo-location"
+    ]
   }
 }

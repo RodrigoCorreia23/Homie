@@ -1,4 +1,7 @@
-export const API_URL = __DEV__ ? 'http://localhost:3001' : 'https://homie-ul1n.onrender.com';
+const DEV_API_URL = 'http://localhost:3001';
+const PROD_API_URL = 'https://homie-api.onrender.com';
+
+export const API_URL = __DEV__ ? DEV_API_URL : PROD_API_URL;
 
 export const COLORS = {
   primary: '#4A90D9',
